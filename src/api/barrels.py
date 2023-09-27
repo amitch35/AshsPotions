@@ -19,6 +19,15 @@ class Barrel(BaseModel):
 
     quantity: int
 
+def list_viable(gold: int, catalog: list[Barrel]):
+    """ Returns a new list of only options from the catalog that you can both
+    afford and are available (ie. quantity greater than 0)"""
+    viable_options = []
+    for barrel in catalog:
+         if barrel.price <= gold and barrel.quantity > 0:
+              viable_options.append(barrel)
+    return viable_options
+
 @router.post("/deliver")
 def post_deliver_barrels(barrels_delivered: list[Barrel]):
     """ """
@@ -32,9 +41,19 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     """ """
     print(wholesale_catalog)
 
-    return [
-        {
-            "sku": "SMALL_RED_BARREL",
-            "quantity": 1,
-        }
-    ]
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
+        for row in result:
+            print(row)
+            if row[3] < 10:
+                options = list_viable(row[1], wholesale_catalog) # check afford and quantity in catalog
+                if len(options) > 0:
+                        return [
+                            {
+                                "sku": "SMALL_RED_BARREL",
+                                "quantity": 1,
+                            }
+                        ]
+        return
+
+
