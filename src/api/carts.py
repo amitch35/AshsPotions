@@ -69,6 +69,7 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
 
 class CartCheckout(BaseModel):
     payment: str
+    gold_paid: int
 
 @router.post("/{cart_id}/checkout")
 def checkout(cart_id: int, cart_checkout: CartCheckout):
@@ -84,7 +85,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             sql = f"SELECT * FROM global_inventory"
             result = connection.execute(sqlalchemy.text(sql))
             inv = result.first() # inventory is on a single row
-            if selling > inv.num_red_potions or cart_checkout.payment < price:
+            if selling > inv.num_red_potions or cart_checkout.gold_paid < price:
                 print(f"Cart with id {cart_id} requested too many potions or did not pay enough for them")
                 selling = 0
                 price = 0
