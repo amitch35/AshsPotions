@@ -79,19 +79,22 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         if result:
             record = result.first()
             selling = record.red_potions_requested
+            transaction = True
             price = RED_PRICE * selling
-            if cart_checkout.payment < price:
-                selling = cart_checkout.payment / RED_PRICE
-                price = RED_PRICE * selling
             sql = f"SELECT * FROM global_inventory"
             result = connection.execute(sqlalchemy.text(sql))
             inv = result.first() # inventory is on a single row
-            if selling > inv.num_red_potions:
-                selling = inv.num_red_potions
-            sql = f"UPDATE global_inventory SET gold = gold + {price}, num_red_potions = num_red_potions - {selling} "
+            if selling > inv.num_red_potions or cart_checkout.payment < price:
+                print(f"Cart with id {cart_id} requested too many potions or did not pay enough for them")
+                selling = 0
+                price = 0
+                transaction = False
+                sql = ""
+            else:
+                sql = f"UPDATE global_inventory SET gold = gold + {price}, num_red_potions = num_red_potions - {selling} "
             sql += f"DELETE FROM shopping_carts WHERE id = {cart_id}"
             connection.execute(sqlalchemy.text(sql))
-            return {"total_potions_bought": selling, "total_gold_paid": price}
+            return {"success": transaction, "total_potions_bought": selling, "total_gold_paid": price}
         else:
             print(f"Cart with id {cart_id} does not exist")
             return "No cart found"
