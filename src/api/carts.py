@@ -32,7 +32,7 @@ def create_cart(new_cart: NewCart):
 def get_cart(cart_id: int):
     """ """
     with db.engine.begin() as connection:
-        sql = f"SELECT * FROM shopping_carts WHERE customer = {new_cart} AND red_potions_requested = 0 ORDER BY id"
+        sql = f"SELECT * FROM shopping_carts WHERE id = {cart_id}"
         result = connection.execute(sqlalchemy.text(sql))
         if result:
             record = result.first()
