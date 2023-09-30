@@ -38,9 +38,9 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
         # blue_ml_received = 0
         # dark_ml_received = 0
         gold_spent = 0
-        for type in barrels_delivered:
-            red_ml_received = type.ml_per_barrel * type.quantity
-            gold_spent += type.price * type.quantity
+        for barrel in barrels_delivered:
+            red_ml_received = barrel.ml_per_barrel * barrel.quantity
+            gold_spent += barrel.price * barrel.quantity
         with db.engine.begin() as connection:
             sql = f"UPDATE global_inventory SET gold = gold - {gold_spent}, num_red_ml = num_red_ml + {red_ml_received}"
             connection.execute(sqlalchemy.text(sql))
@@ -67,6 +67,9 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                             "quantity": 1,
                         }
                     ]
-        return
+            else:
+                print("Could not afford any barrels or none available")
+        else:
+            print(f"Current inventory sufficient -> {inv.num_red_potions} red potions")
 
 
