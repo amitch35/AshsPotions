@@ -17,6 +17,7 @@ def get_inventory():
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
         inv = result.first() # inventory is on a single row
+        print(f"number_of_potions: {inv.num_red_potions}, ml_in_barrels: {inv.num_red_ml}, gold: {inv.gold}")
     
     return {"number_of_potions": inv.num_red_potions, "ml_in_barrels": inv.num_red_ml, "gold": inv.gold}
 
