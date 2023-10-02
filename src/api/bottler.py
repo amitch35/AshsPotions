@@ -62,5 +62,6 @@ def get_bottle_plan():
             ]
         else:
             print("Not enough ml for bottling")
+        return []
 
 
