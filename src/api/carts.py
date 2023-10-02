@@ -20,12 +20,12 @@ class NewCart(BaseModel):
 def create_cart(new_cart: NewCart):
     """ """
     with db.engine.begin() as connection:
-        sql = f"INSERT INTO shopping_carts (customer, red_potions_requested) VALUES ('{new_cart.customer}', 0); SELECT SCOPE_IDENTITY();"
-        id = connection.execute(sqlalchemy.text(sql))
-        # sql = f"SELECT * FROM shopping_carts WHERE customer = {new_cart.customer} AND red_potions_requested = 0 ORDER BY id"
-        # result = connection.execute(sqlalchemy.text(sql))
-        # record = result.first()
-    return {f"cart_id: {id}"}
+        sql = f"INSERT INTO shopping_carts (customer, red_potions_requested) VALUES ('{new_cart.customer}', 0);"
+        connection.execute(sqlalchemy.text(sql))
+        sql = f"SELECT * FROM shopping_carts WHERE customer = {new_cart.customer} AND red_potions_requested = 0 ORDER BY id desc"
+        result = connection.execute(sqlalchemy.text(sql))
+        record = result.first()
+    return {f"cart_id: {record.id}"}
 
 
 @router.get("/{cart_id}")
