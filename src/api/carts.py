@@ -25,7 +25,7 @@ def create_cart(new_cart: NewCart):
         # sql = f"SELECT * FROM shopping_carts WHERE customer = {new_cart.customer} AND red_potions_requested = 0 ORDER BY id"
         # result = connection.execute(sqlalchemy.text(sql))
         # record = result.first()
-    return {f"cart_id: {1}"}
+    return {f"cart_id: {id}"}
 
 
 @router.get("/{cart_id}")
