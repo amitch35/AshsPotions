@@ -58,6 +58,7 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
             # check if SKU is an item that I offer in my catalog
             if item_sku == "RED_POTION_0":
                 sql = f"UPDATE shopping_carts SET red_potions_requested = {cart_item.quantity} WHERE id = {cart_id}"
+                connection.execute(sqlalchemy.text(sql))
                 return "OK"
             else:
                 print(f"Requested item, with SKU: {item_sku} is not offered")
