@@ -40,7 +40,7 @@ def get_cart(cart_id: int):
             return { f"Cart with id: {record.id} for customer: {record.customer} contains {record.red_potions_requested} red potions"}
         else:
             print(f"Cart with id {cart_id} does not exist")
-            return {}
+            return ""
 
 
 class CartItem(BaseModel):
@@ -65,7 +65,7 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
                 return "No matching sku found in catalog"
         else:
             print(f"Cart with id {cart_id} does not exist")
-            return []
+            return "Cart not found"
 
 
 class CartCheckout(BaseModel):
@@ -99,4 +99,4 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             return {"success": transaction, "total_potions_bought": selling, "total_gold_paid": price}
         else:
             print(f"Cart with id {cart_id} does not exist")
-            return "No cart found"
+            return {}
