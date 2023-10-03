@@ -40,7 +40,7 @@ def get_cart(cart_id: int):
             return { f"Cart with id: {record.id} for customer: {record.customer} contains {record.red_potions_requested} red potions"}
         else:
             print(f"Cart with id {cart_id} does not exist")
-        return ""
+        return f"Cart with id {cart_id} does not exist"
 
 
 class CartItem(BaseModel):
