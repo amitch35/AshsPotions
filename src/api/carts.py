@@ -78,9 +78,8 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     with db.engine.begin() as connection:
         sql = f"SELECT * FROM shopping_carts WHERE id = {cart_id};"
         result = connection.execute(sqlalchemy.text(sql))
-        print(result)
-        if result:
-            record = result.first()
+        record = result.first()
+        if record:
             selling = record.red_potions_requested
             transaction = True
             price = RED_PRICE * selling
