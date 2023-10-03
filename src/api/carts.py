@@ -99,4 +99,4 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             return {"success": transaction, "total_potions_bought": selling, "total_gold_paid": price}
         else:
             print(f"Cart with id {cart_id} does not exist")
-            return {}
+            return {"success": False, "total_potions_bought": 0, "total_gold_paid": 0}
