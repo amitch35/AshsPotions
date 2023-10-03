@@ -34,13 +34,13 @@ def get_cart(cart_id: int):
     with db.engine.begin() as connection:
         sql = f"SELECT * FROM shopping_carts WHERE id = {cart_id}"
         result = connection.execute(sqlalchemy.text(sql))
-        if result:
-            record = result.first()
+        record = result.first()
+        if record:
             print(f"Cart with id: {record.id} for customer: {record.customer} contains {record.red_potions_requested} red potions")
             return { f"Cart with id: {record.id} for customer: {record.customer} contains {record.red_potions_requested} red potions"}
         else:
             print(f"Cart with id {cart_id} does not exist")
-            return ""
+        return ""
 
 
 class CartItem(BaseModel):
@@ -53,8 +53,8 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     with db.engine.begin() as connection:
         sql = f"SELECT * FROM shopping_carts WHERE id = {cart_id}"
         result = connection.execute(sqlalchemy.text(sql))
-        if result:
-            record = result.first()
+        record = result.first()
+        if record:
             # check if SKU is an item that I offer in my catalog
             if item_sku == "RED_POTION_0":
                 sql = f"UPDATE shopping_carts SET red_potions_requested = {cart_item.quantity} WHERE id = {cart_id}"
