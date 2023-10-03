@@ -76,14 +76,14 @@ class CartCheckout(BaseModel):
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
     with db.engine.begin() as connection:
-        sql = f"SELECT * FROM shopping_carts WHERE id = {cart_id}"
+        sql = f"SELECT * FROM shopping_carts WHERE id = {cart_id};"
         result = connection.execute(sqlalchemy.text(sql))
         if result:
             record = result.first()
             selling = record.red_potions_requested
             transaction = True
             price = RED_PRICE * selling
-            sql = f"SELECT * FROM global_inventory"
+            sql = f"SELECT * FROM global_inventory;"
             result = connection.execute(sqlalchemy.text(sql))
             inv = result.first() # inventory is on a single row
             if selling > inv.num_red_potions or cart_checkout.gold_paid < price:
@@ -93,8 +93,8 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 transaction = False
                 sql = ""
             else:
-                sql = f"UPDATE global_inventory SET gold = gold + {price}, num_red_potions = num_red_potions - {selling} "
-            sql += f"DELETE FROM shopping_carts WHERE id = {cart_id}"
+                sql = f"UPDATE global_inventory SET gold = gold + {price}, num_red_potions = num_red_potions - {selling}; "
+            sql += f"DELETE FROM shopping_carts WHERE id = {cart_id};"
             connection.execute(sqlalchemy.text(sql))
             return {"success": transaction, "total_potions_bought": selling, "total_gold_paid": price}
         else:
