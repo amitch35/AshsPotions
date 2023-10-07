@@ -93,21 +93,22 @@ class CartCheckout(BaseModel):
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
     with db.engine.begin() as connection:
-        sql = f"SELECT * FROM shopping_carts WHERE id = {cart_id} "
+        sql = f"SELECT * FROM shopping_carts WHERE id = {cart_id}; "
         result = connection.execute(sqlalchemy.text(sql))
         cart = result.first()
+        print(f"Cart {cart_id}: {cart}")
         if cart: # if there exists a cart with the given id
             sql = f"SELECT * FROM cart_contents AS cnt "
             sql += f"JOIN potions_inventory AS pot ON cnt.potion_sku = pot.sku "
             sql += f"WHERE cart_id = {cart_id}; "
             result = connection.execute(sqlalchemy.text(sql))
             cart_content = result.first()
-            sql = ""
             transaction = False
             total = 0
             selling = 0
             if cart_content: # if there is anything in the cart
                 # check validity of cart and determine total price
+                result = connection.execute(sqlalchemy.text(sql))
                 for record in result:
                     if record.quantity < record.quantity_requested:
                         print(f"Cart with id {cart_id} requested too many potions (insufficient stock)")
@@ -124,13 +125,25 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                         sql += f"UPDATE potions_inventory "
                         sql += f"SET quantity = quantity - {record.quantity_requested} WHERE sku = '{record.sku}'; "
                 else:
+                    sql = ""
                     print(f"Cart with id {cart_id} did not pay enough for potions requested")
                     selling = 0
                     total = 0
             else:
+                sql = ""
                 print(f"Cart with id {cart_id} was empty")
-            sql += f"DELETE FROM shopping_carts WHERE id = {cart_id}; "
+            sql += f"DELETE FROM shopping_carts WHERE id = {cart_id}; " 
             connection.execute(sqlalchemy.text(sql))
+
+            # Update total potions count in global inventory
+            sql = f"SELECT * FROM potions_inventory; "
+            result = connection.execute(sqlalchemy.text(sql))
+            total = 0
+            for record in result:
+                total += record.quantity
+            sql = f"UPDATE global_inventory SET num_potions = {total}; "
+            connection.execute(sqlalchemy.text(sql))
+            
             return {"success": transaction, "total_potions_bought": selling, "total_gold_paid": total}
         else:
             print(f"Cart with id {cart_id} does not exist")
