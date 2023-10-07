@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from src.api import auth
 import sqlalchemy
 from src import database as db
-from bottler import Color
+from src.api.bottler import Color
 
 MAX_PURCHASE_NUM = 2
 NUM_COLORS = 4
