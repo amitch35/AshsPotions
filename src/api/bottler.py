@@ -42,7 +42,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
                 sql += "UPDATE potions_inventory "
                 sql += f"SET quantity = quantity + {potion.quantity} "
                 sql += f"WHERE red = {potion.potion_type[Color.RED]} AND green = {potion.potion_type[Color.GREEN]} AND "
-                sql += f"blue = {potion.potion_type[Color.BLUE]} AND dark = {potion.potion_type[Color.RED]}; "
+                sql += f"blue = {potion.potion_type[Color.BLUE]} AND dark = {potion.potion_type[Color.DARK]}; "
                 connection.execute(sqlalchemy.text(sql))
             sql = "UPDATE global_inventory "
             sql += f"SET num_red_ml = num_red_ml - {red_ml_mixed}, num_green_ml = num_green_ml - {green_ml_mixed}, "
