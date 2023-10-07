@@ -4,6 +4,13 @@ from pydantic import BaseModel
 from src.api import auth
 import sqlalchemy
 from src import database as db
+import audit
+
+class Color(Enum):
+    RED = 0
+    GREEN = 1
+    BLUE = 2
+    DARK = 3
 
 router = APIRouter(
     prefix="/bottler",
@@ -20,18 +27,27 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
     """ """
     print(potions_delivered)
     if potions_delivered:
-        red_potions_received = 0
-        # green_potions_received = 0
-        # blue_potions_received = 0
-        # dark_potions_received = 0
-        red_ml_mixed = 0
-        for potion in potions_delivered:
-            red_ml_mixed += potion.potion_type[0]
-            red_potions_received += potion.quantity
         with db.engine.begin() as connection:
-            sql = f"UPDATE global_inventory SET num_red_potions = num_red_potions + {red_potions_received}, num_red_ml = num_red_ml - {red_ml_mixed}"
+            red_ml_mixed = 0
+            green_ml_mixed = 0
+            blue_ml_mixed = 0
+            dark_ml_mixed = 0
+            sql = ""
+            for potion in potions_delivered:
+                red_ml_mixed += potion.potion_type[Color.RED]
+                green_ml_mixed += potion.potion_type[Color.GREEN]
+                blue_ml_mixed += potion.potion_type[Color.BLUE]
+                dark_ml_mixed += potion.potion_type[Color.DARK]
+                sql += "UPDATE potions_inventory "
+                sql += f"WHERE red = {potion.potion_type[Color.RED]}, green = {potion.potion_type[Color.GREEN]}, "
+                sql += f"blue = {potion.potion_type[Color.BLUE]}, dark = {potion.potion_type[Color.RED]} "
+                sql += f"SET quantity = quantity + {potion.quantity}; "
+            sql += "UPDATE global_inventory "
+            sql += f"SET num_red_ml = num_red_ml - {red_ml_mixed}, num_green_ml = num_green_ml - {green_ml_mixed}, "
+            sql += f"num_blue_ml = num_blue_ml - {blue_ml_mixed}, num_dark_ml = num_dark_ml - {dark_ml_mixed};"
             connection.execute(sqlalchemy.text(sql))
-        return "OK"
+            audit.update_potions_count()
+            return "OK"
     else:
         return "Nothing Delivered"
 
@@ -46,22 +62,47 @@ def get_bottle_plan():
     # green potion to add.
     # Expressed in integers from 1 to 100 that must sum up to 100.
 
-    # Initial logic: bottle all barrels into red potions.
+    # Initial logic: bottle all barrels into potions.
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
         inv = result.first() # inventory is on a single row
-        print(f"Current red ml: {inv.num_red_ml}")
+        bottle_plan = []
         if inv.num_red_ml >= 100:
-            num_potions = (inv.num_red_ml / 100) - (inv.num_red_ml % 100)
-            print(f"Plan to bottle {num_potions} potions")
-            return [
-                {
+            num_potions = (inv.num_red_ml // 100)
+            print(f"Plan to bottle {num_potions} red potions")
+            bottle_plan.append({
                     "potion_type": [100, 0, 0, 0],
                     "quantity": num_potions,
-                }
-            ]
+                })
         else:
-            print("Not enough ml for bottling")
-        return []
+            print("Not enough red ml for bottling")
+        if inv.num_green_ml >= 100:
+            num_potions = (inv.num_green_ml // 100)
+            print(f"Plan to bottle {num_potions} green potions")
+            bottle_plan.append({
+                    "potion_type": [0, 100, 0, 0],
+                    "quantity": num_potions,
+                })
+        else:
+            print("Not enough green ml for bottling")
+        if inv.num_blue_ml >= 100:
+            num_potions = (inv.num_blue_ml // 100)
+            print(f"Plan to bottle {num_potions} blue potions")
+            bottle_plan.append({
+                    "potion_type": [0, 0, 100, 0],
+                    "quantity": num_potions,
+                })
+        else:
+            print("Not enough blue ml for bottling")
+        if inv.num_dark_ml >= 100:
+            num_potions = (inv.num_dark_ml // 100)
+            print(f"Plan to bottle {num_potions} dark potions")
+            bottle_plan.append({
+                    "potion_type": [0, 0, 0, 100],
+                    "quantity": num_potions,
+                })
+        else:
+            print("Not enough dark ml for bottling")
+        return bottle_plan
 
 

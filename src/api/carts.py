@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from pydantic import BaseModel
 from src.api import auth
 import sqlalchemy
@@ -20,9 +20,9 @@ class NewCart(BaseModel):
 def create_cart(new_cart: NewCart):
     """ """
     with db.engine.begin() as connection:
-        sql = f"INSERT INTO shopping_carts (customer, red_potions_requested) VALUES ('{new_cart.customer}', 0);"
+        sql = f"INSERT INTO shopping_carts (customer) VALUES ('{new_cart.customer}');"
         connection.execute(sqlalchemy.text(sql))
-        sql = f"SELECT * FROM shopping_carts WHERE customer = '{new_cart.customer}' AND red_potions_requested = 0 ORDER BY id desc"
+        sql = f"SELECT * FROM shopping_carts WHERE customer = '{new_cart.customer}' ORDER BY id desc"
         result = connection.execute(sqlalchemy.text(sql))
         record = result.first()
     return {f"cart_id: {record.id}"}
@@ -36,8 +36,8 @@ def get_cart(cart_id: int):
         result = connection.execute(sqlalchemy.text(sql))
         record = result.first()
         if record:
-            print(f"Cart with id: {record.id} for customer: {record.customer} contains {record.red_potions_requested} red potions")
-            return { f"Cart with id: {record.id} for customer: {record.customer} contains {record.red_potions_requested} red potions"}
+            print(f"Cart with id: {record.id} if for customer: {record.customer}")
+            return { f"Cart with id: {record.id} for customer: {record.customer}"}
         else:
             print(f"Cart with id {cart_id} does not exist")
         return f"Cart with id {cart_id} does not exist"
@@ -53,16 +53,31 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     with db.engine.begin() as connection:
         sql = f"SELECT * FROM shopping_carts WHERE id = {cart_id}"
         result = connection.execute(sqlalchemy.text(sql))
-        record = result.first()
-        if record:
-            # check if SKU is an item that I offer in my catalog
-            if item_sku == "RED_POTION_0":
-                sql = f"UPDATE shopping_carts SET red_potions_requested = {cart_item.quantity} WHERE id = {cart_id}"
+        cart = result.first()
+        if cart:
+            if cart_item.quantity == 0: # if requesting 0 potions
+                sql = f"DELETE FROM cart_contents WHERE cart_id = {cart_id}, potion_sku = '{item_sku}'; "
+                connection.execute(sqlalchemy.text(sql))
+                return "OK"
+            # check if SKU is an item that is offered in shop catalog
+            sql = f"SELECT quantity FROM potions_inventory WHERE sku = '{item_sku}'; "
+            result = connection.execute(sqlalchemy.text(sql))
+            stock = result.first()
+            if stock.quantity:
+                sql = f"SELECT * FROM cart_contents WHERE cart_id = {cart_id}, potion_sku = '{item_sku}'; "
+                result = connection.execute(sqlalchemy.text(sql))
+                record = result.first()
+                if record: # if updating the quantity asked for
+                    sql = f"UPDATE cart_contents SET quantity_requested = {cart_item.quantity} "
+                    sql += f"WHERE id = {cart_id}, potion_sku = '{item_sku}'; "
+                else: # adding new item to cart
+                    sql = f"INSERT INTO cart_contents (cart_id, potion_sku, quantity) "
+                    sql += f"VALUES ({cart_id}, '{item_sku}', {cart_item.quantity})"
                 connection.execute(sqlalchemy.text(sql))
                 return "OK"
             else:
                 print(f"Requested item, with SKU: {item_sku} is not offered")
-                return "No matching sku found in catalog"
+                return "No matching sku found in catalog or out of stock"
         else:
             print(f"Cart with id {cart_id} does not exist")
             return "Cart not found"
@@ -76,27 +91,44 @@ class CartCheckout(BaseModel):
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
     with db.engine.begin() as connection:
-        sql = f"SELECT * FROM shopping_carts WHERE id = {cart_id};"
+        sql = f"SELECT * FROM shopping_carts WHERE id = {cart_id} "
         result = connection.execute(sqlalchemy.text(sql))
-        record = result.first()
-        if record:
-            selling = record.red_potions_requested
-            transaction = True
-            price = RED_PRICE * selling
-            sql = f"SELECT * FROM global_inventory;"
+        cart = result.first()
+        if cart: # if there exists a cart with the given id
+            sql = f"SELECT * FROM cart_contents AS cnt WHERE id = {cart_id} "
+            sql += f"JOIN potions_inventory AS pot ON cnt.potion_sku = pot.sku; "
             result = connection.execute(sqlalchemy.text(sql))
-            inv = result.first() # inventory is on a single row
-            if selling > inv.num_red_potions or cart_checkout.gold_paid < price:
-                print(f"Cart with id {cart_id} requested too many potions or did not pay enough for them")
-                selling = 0
-                price = 0
-                transaction = False
-                sql = ""
+            cart_content = result.first()
+            sql = ""
+            transaction = False
+            total = 0
+            selling = 0
+            if cart_content: # if there is anything in the cart
+                # check validity of cart and determine total price
+                for record in result:
+                    if record.quantity < record.quantity_requested:
+                        print(f"Cart with id {cart_id} requested too many potions (insufficient stock)")
+                        raise HTTPException(
+                            status_code=status.HTTP_401_UNAUTHORIZED, detail="Forbidden: insufficient potion stock"
+                        )
+                    selling += record.quantity_requested
+                    total += record.price * record.quantity_requested
+                # execute transaction if paid enough
+                if cart_checkout.gold_paid >= total:
+                    transaction = True
+                    sql = f"UPDATE global_inventory SET gold = gold + {total}; "
+                    for record in result:
+                        sql += f"UPDATE potions_inventory "
+                        sql += f"SET quantity = quantity - {record.quantity_requested} WHERE sku = {record.sku}; "
+                else:
+                    print(f"Cart with id {cart_id} did not pay enough for potions requested")
+                    selling = 0
+                    total = 0
             else:
-                sql = f"UPDATE global_inventory SET gold = gold + {price}, num_red_potions = num_red_potions - {selling}; "
-            sql += f"DELETE FROM shopping_carts WHERE id = {cart_id};"
+                print(f"Cart with id {cart_id} was empty")
+            sql += f"DELETE FROM shopping_carts WHERE id = {cart_id}; "
             connection.execute(sqlalchemy.text(sql))
-            return {"success": transaction, "total_potions_bought": selling, "total_gold_paid": price}
+            return {"success": transaction, "total_potions_bought": selling, "total_gold_paid": total}
         else:
             print(f"Cart with id {cart_id} does not exist")
             return {"success": False, "total_potions_bought": 0, "total_gold_paid": 0}

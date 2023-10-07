@@ -11,15 +11,23 @@ router = APIRouter(
     dependencies=[Depends(auth.get_api_key)],
 )
 
+def update_potions_count():
+    with db.engine.begin() as connection:
+        sql = f"UPDATE global_inventory SET num_potions = (SELECT SUM(quantity) FROM potions_inventory);"
+        connection.execute(sqlalchemy.text(sql))
+    return
+
 @router.get("/inventory")
 def get_inventory():
     """ """
+    update_potions_count()
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
+        result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory;"))
         inv = result.first() # inventory is on a single row
-        print(f"number_of_potions: {inv.num_red_potions}, ml_in_barrels: {inv.num_red_ml}, gold: {inv.gold}")
+        total_ml = inv.num_red_ml + inv.num_green_ml + inv.num_blue_ml + inv.num_dark_ml
+        print(f"number_of_potions: {inv.num_potions}, ml_in_barrels: {total_ml}, gold: {inv.gold}")
     
-    return {"number_of_potions": inv.num_red_potions, "ml_in_barrels": inv.num_red_ml, "gold": inv.gold}
+    return {"number_of_potions": inv.num_potions, "ml_in_barrels": total_ml, "gold": inv.gold}
 
 class Result(BaseModel):
     gold_match: bool
