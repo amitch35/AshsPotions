@@ -97,8 +97,9 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         result = connection.execute(sqlalchemy.text(sql))
         cart = result.first()
         if cart: # if there exists a cart with the given id
-            sql = f"SELECT * FROM cart_contents AS cnt WHERE id = {cart_id} "
-            sql += f"JOIN potions_inventory AS pot ON cnt.potion_sku = pot.sku; "
+            sql = f"SELECT * FROM cart_contents AS cnt "
+            sql += f"JOIN potions_inventory AS pot ON cnt.potion_sku = pot.sku "
+            sql += f"WHERE cart_id = {cart_id}; "
             result = connection.execute(sqlalchemy.text(sql))
             cart_content = result.first()
             sql = ""
@@ -121,7 +122,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                     sql = f"UPDATE global_inventory SET gold = gold + {total}; "
                     for record in result:
                         sql += f"UPDATE potions_inventory "
-                        sql += f"SET quantity = quantity - {record.quantity_requested} WHERE sku = {record.sku}; "
+                        sql += f"SET quantity = quantity - {record.quantity_requested} WHERE sku = '{record.sku}'; "
                 else:
                     print(f"Cart with id {cart_id} did not pay enough for potions requested")
                     selling = 0
