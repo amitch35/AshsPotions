@@ -117,8 +117,8 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             if len(options) > 0:
                 priority = list_priority()
                 i = 0
-                return []
                 while (len(options) > 0):
+                    options = list_viable(gold, options) # check what options remain with current gold
                     barrel = None
                     match priority[i]:
                         case Color.RED:
@@ -144,7 +144,6 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                             "sku": barrel.sku,
                             "quantity": 1,
                         })
-                    options = list_viable(gold, options) # check what options remain with current gold
                 return barrel_plan
             else:
                 print("Could not afford any barrels or none available")
