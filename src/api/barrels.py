@@ -110,11 +110,11 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         sql = "SELECT * FROM global_inventory"
         result = connection.execute(sqlalchemy.text(sql))
         inv = result.first() # inventory is on a single row
-        print(inv)
         if inv.num_potions < 35:
             barrel_plan = []
             gold = inv.gold
             options = list_viable(gold, wholesale_catalog) # check afford and quantity in catalog
+            return []
             if len(options) > 0:
                 priority = list_priority()
                 i = 0
