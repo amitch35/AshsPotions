@@ -21,17 +21,6 @@ class PotionInventory(BaseModel):
     potion_type: list[int]
     quantity: int
 
-def update_potions_count():
-    with db.engine.begin() as connection:
-        sql = f"SELECT * FROM potions_inventory; "
-        result = connection.execute(sqlalchemy.text(sql))
-        total = 0
-        for record in result:
-            total += record.quantity
-        sql = f"UPDATE global_inventory SET num_potions = {total}; "
-        connection.execute(sqlalchemy.text(sql))
-    return
-
 @router.post("/deliver")
 def post_deliver_bottles(potions_delivered: list[PotionInventory]):
     """ """
@@ -59,6 +48,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
             sql += f"SET num_red_ml = num_red_ml - {red_ml_mixed}, num_green_ml = num_green_ml - {green_ml_mixed}, "
             sql += f"num_blue_ml = num_blue_ml - {blue_ml_mixed}, num_dark_ml = num_dark_ml - {dark_ml_mixed};"
             connection.execute(sqlalchemy.text(sql))
+            # Update total potions count in global inventory
             sql = f"SELECT * FROM potions_inventory; "
             result = connection.execute(sqlalchemy.text(sql))
             total = 0
