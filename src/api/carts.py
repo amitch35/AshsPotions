@@ -122,6 +122,8 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                     total += record.price * record.quantity_requested
                 # execute transaction if paid enough
                 if cart_checkout.gold_paid >= total:
+                    print(f"Payment was sufficient, completing transaction")
+                    result = connection.execute(sqlalchemy.text(sql))
                     transaction = True
                     sql = f"UPDATE global_inventory SET gold = gold + {total}; "
                     for record in result:
@@ -141,10 +143,10 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             # Update total potions count in global inventory
             sql = f"SELECT * FROM potions_inventory; "
             result = connection.execute(sqlalchemy.text(sql))
-            total = 0
+            num_potions = 0
             for record in result:
-                total += record.quantity
-            sql = f"UPDATE global_inventory SET num_potions = {total}; "
+                num_potions += record.quantity
+            sql = f"UPDATE global_inventory SET num_potions = {num_potions}; "
             connection.execute(sqlalchemy.text(sql))
 
             return {"success": transaction, "total_potions_bought": selling, "total_gold_paid": total}
