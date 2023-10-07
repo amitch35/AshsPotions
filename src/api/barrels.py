@@ -143,7 +143,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                     gold -= barrel.price
                     # Check if there is a Barrel with the same SKU already in barrel_plan
                     index = next((index for index, item in enumerate(barrel_plan) if item.sku == barrel.sku), None)
-                    if index:
+                    if index is not None:
                         barrel_plan[index].quantity += 1
                     else:
                         print(f"Barrel added to plan: {barrel.sku}")
