@@ -61,6 +61,7 @@ def look_for(color: str, options: list[Barrel]):
     # Find the barrel with the highest ml_per_barrel among the filtered options
     if filtered_options:
         biggest_barrel = max(filtered_options, key=lambda barrel: barrel.ml_per_barrel)
+        print("found green!")
         return biggest_barrel
     else:
         # If no matching barrels were found
@@ -133,6 +134,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                     i += 1 # Increment through priority list
                     if i == NUM_COLORS: # Check if need to cycle through again
                         i = 0
+                        break # TODO: testing
                     if barrel is None: # if there are no options for that color
                         continue
                     gold -= barrel.price
