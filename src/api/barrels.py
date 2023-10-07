@@ -133,6 +133,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                     if i == NUM_COLORS: # Check if need to cycle through again
                         i = 0
                     if barrel is None: # if there are no options for that color
+                        return []
                         continue
                     gold -= barrel.price
                     # Check if there is a Barrel with the same SKU already in barrel_plan
