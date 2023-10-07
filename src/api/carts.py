@@ -70,7 +70,7 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
                 if record is not None: # if updating the quantity asked for
                     print("Item already in cart, updating ...")
                     sql = f"UPDATE cart_contents SET quantity_requested = {cart_item.quantity} "
-                    sql += f"WHERE id = {cart_id} AND potion_sku = '{item_sku}'; "
+                    sql += f"WHERE id = {record.id}; "
                 else: # adding new item to cart
                     print("New item added to cart ...")
                     sql = f"INSERT INTO cart_contents (cart_id, potion_sku, quantity_requested) "
