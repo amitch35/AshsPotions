@@ -119,6 +119,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 priority = list_priority()
                 i = 0
                 while (len(options) > 0):
+                    barrel = None
                     match priority[i]:
                         case Color.RED:
                             barrel = look_for("RED", options)
