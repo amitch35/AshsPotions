@@ -25,7 +25,7 @@ class PotionInventory(BaseModel):
 @router.post("/deliver")
 def post_deliver_bottles(potions_delivered: list[PotionInventory]):
     """ """
-    print(potions_delivered)
+    print(f"Potions Delivered: {potions_delivered}")
     if potions_delivered:
         with db.engine.begin() as connection:
             red_ml_mixed = 0
@@ -45,8 +45,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
                 sql += f"SET quantity = quantity + {num_potions} "
                 sql += f"WHERE red = {potion.potion_type[Color.RED]} AND green = {potion.potion_type[Color.GREEN]} AND "
                 sql += f"blue = {potion.potion_type[Color.BLUE]} AND dark = {potion.potion_type[Color.DARK]}; "
-                connection.execute(sqlalchemy.text(sql))
-            sql = "UPDATE global_inventory "
+            sql += "UPDATE global_inventory "
             sql += f"SET num_red_ml = num_red_ml - {red_ml_mixed}, num_green_ml = num_green_ml - {green_ml_mixed}, "
             sql += f"num_blue_ml = num_blue_ml - {blue_ml_mixed}, num_dark_ml = num_dark_ml - {dark_ml_mixed};"
             connection.execute(sqlalchemy.text(sql))
