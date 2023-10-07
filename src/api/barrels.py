@@ -147,12 +147,9 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                         barrel_plan[index].quantity += 1
                     else:
                         print(f"Barrel added to plan: {barrel.sku}")
-                        barrel_plan.append({
-                            "sku": barrel.sku,
-                            "quantity": 1,
-                        })
+                        barrel_plan.append(barrel)
                     options = list_viable(gold, options) # check what options remain with current gold
-                return barrel_plan
+                return ({ "sku": bar.sku, "quantity": bar.quantity, } for bar in barrel_plan)
             else:
                 print("Could not afford any barrels or none available")
         else:
