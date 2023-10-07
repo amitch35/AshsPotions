@@ -18,7 +18,7 @@ def update_potions_count():
         total = 0
         for record in result:
             total += record.quantity
-        sql = f"UPDATE global_inventory SET num_potions = {total};"
+        sql = f"UPDATE global_inventory SET num_potions = {total}; "
         connection.execute(sqlalchemy.text(sql))
     return
 
