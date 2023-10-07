@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends
-from enum import Enum
+from enum import IntEnum
 from pydantic import BaseModel
 from src.api import auth
 import sqlalchemy
 from src import database as db
 from src.api import audit
 
-class Color(Enum):
+class Color(IntEnum):
     RED = 0
     GREEN = 1
     BLUE = 2
