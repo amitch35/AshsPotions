@@ -49,7 +49,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
             sql += f"SET num_red_ml = num_red_ml - {red_ml_mixed}, num_green_ml = num_green_ml - {green_ml_mixed}, "
             sql += f"num_blue_ml = num_blue_ml - {blue_ml_mixed}, num_dark_ml = num_dark_ml - {dark_ml_mixed};"
             connection.execute(sqlalchemy.text(sql))
-            #audit.update_potions_count()
+            audit.update_potions_count()
             return "OK"
     else:
         return "Nothing Delivered"
