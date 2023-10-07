@@ -34,10 +34,11 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
             dark_ml_mixed = 0
             sql = ""
             for potion in potions_delivered:
-                red_ml_mixed += potion.potion_type[Color.RED]
-                green_ml_mixed += potion.potion_type[Color.GREEN]
-                blue_ml_mixed += potion.potion_type[Color.BLUE]
-                dark_ml_mixed += potion.potion_type[Color.DARK]
+                print(f"Handling potion type: {potion.potion_type}")
+                red_ml_mixed += potion.potion_type[Color.RED] * potion.quantity
+                green_ml_mixed += potion.potion_type[Color.GREEN] * potion.quantity
+                blue_ml_mixed += potion.potion_type[Color.BLUE] * potion.quantity
+                dark_ml_mixed += potion.potion_type[Color.DARK] * potion.quantity
                 sql += "UPDATE potions_inventory "
                 sql += f"SET quantity = quantity + {potion.quantity} "
                 sql += f"WHERE red = {potion.potion_type[Color.RED]} AND green = {potion.potion_type[Color.GREEN]} AND "
