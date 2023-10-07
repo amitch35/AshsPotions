@@ -67,10 +67,12 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
                 sql = f"SELECT * FROM cart_contents WHERE cart_id = {cart_id} AND potion_sku = '{item_sku}'; "
                 result = connection.execute(sqlalchemy.text(sql))
                 record = result.first()
-                if record: # if updating the quantity asked for
+                if record is not None: # if updating the quantity asked for
+                    print("Item already in cart, updating ...")
                     sql = f"UPDATE cart_contents SET quantity_requested = {cart_item.quantity} "
                     sql += f"WHERE id = {cart_id} AND potion_sku = '{item_sku}'; "
                 else: # adding new item to cart
+                    print("New item added to cart ...")
                     sql = f"INSERT INTO cart_contents (cart_id, potion_sku, quantity_requested) "
                     sql += f"VALUES ({cart_id}, '{item_sku}', {cart_item.quantity})"
                 connection.execute(sqlalchemy.text(sql))
