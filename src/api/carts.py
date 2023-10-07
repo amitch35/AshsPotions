@@ -114,9 +114,10 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                         print(f"Cart with id {cart_id} requested too many potions (insufficient stock)")
                         sql = f"DELETE FROM shopping_carts WHERE id = {cart_id}; " 
                         connection.execute(sqlalchemy.text(sql))
-                        raise HTTPException(
-                            status_code=status.HTTP_401_UNAUTHORIZED, detail="Forbidden: insufficient potion stock"
-                        )
+                        return "Insufficient Potion Stock"
+                        # raise HTTPException(
+                        #     status_code=status.HTTP_401_UNAUTHORIZED, detail="Forbidden: insufficient potion stock"
+                        # )
                     selling += record.quantity_requested
                     total += record.price * record.quantity_requested
                 # execute transaction if paid enough
