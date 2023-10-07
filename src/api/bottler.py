@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from src.api import auth
 import sqlalchemy
 from src import database as db
-from api import audit
+from src.api import audit
 
 class Color(Enum):
     RED = 0
