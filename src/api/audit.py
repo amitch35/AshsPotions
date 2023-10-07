@@ -13,7 +13,7 @@ router = APIRouter(
 
 def update_potions_count():
     with db.engine.begin() as connection:
-        sql = f"SELECT quantity FROM potions_inventory; "
+        sql = f"SELECT * FROM potions_inventory; "
         result = connection.execute(sqlalchemy.text(sql))
         total = 0
         for record in result:
