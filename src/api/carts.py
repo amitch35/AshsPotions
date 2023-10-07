@@ -36,8 +36,8 @@ def get_cart(cart_id: int):
         result = connection.execute(sqlalchemy.text(sql))
         record = result.first()
         if record:
-            print(f"Cart with id: {record.id} if for customer: {record.customer}")
-            return { f"Cart with id: {record.id} for customer: {record.customer}"}
+            print(f"Cart with id: {record.id} is for customer: {record.customer}")
+            return { f"Cart with id: {record.id} is for customer: {record.customer}"}
         else:
             print(f"Cart with id {cart_id} does not exist")
         return f"Cart with id {cart_id} does not exist"
@@ -71,7 +71,7 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
                     sql = f"UPDATE cart_contents SET quantity_requested = {cart_item.quantity} "
                     sql += f"WHERE id = {cart_id} AND potion_sku = '{item_sku}'; "
                 else: # adding new item to cart
-                    sql = f"INSERT INTO cart_contents (cart_id, potion_sku, quantity) "
+                    sql = f"INSERT INTO cart_contents (cart_id, potion_sku, quantity_requested) "
                     sql += f"VALUES ({cart_id}, '{item_sku}', {cart_item.quantity})"
                 connection.execute(sqlalchemy.text(sql))
                 return "OK"
