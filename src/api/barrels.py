@@ -42,7 +42,7 @@ def list_priority():
         for record in result:
             potion_type = [record.red, record.green, record.blue, record.dark]
             potion_color = potion_type.index(max(potion_type))
-            if (potion_color) not in priority_list:
+            if potion_color not in priority_list:
                 priority_list.append(potion_color)
             if len(priority_list) == NUM_COLORS:
                 break
@@ -114,10 +114,10 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             barrel_plan = []
             gold = inv.gold
             options = list_viable(gold, wholesale_catalog) # check afford and quantity in catalog
-            return []
             if len(options) > 0:
                 priority = list_priority()
                 i = 0
+                return []
                 while (len(options) > 0):
                     barrel = None
                     match priority[i]:
