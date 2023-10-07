@@ -56,7 +56,7 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
         cart = result.first()
         if cart:
             if cart_item.quantity == 0: # if requesting 0 potions
-                sql = f"DELETE FROM cart_contents WHERE cart_id = {cart_id}, potion_sku = '{item_sku}'; "
+                sql = f"DELETE FROM cart_contents WHERE cart_id = {cart_id} AND potion_sku = '{item_sku}'; "
                 connection.execute(sqlalchemy.text(sql))
                 return "OK"
             # check if SKU is an item that is offered in shop catalog
@@ -64,12 +64,12 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
             result = connection.execute(sqlalchemy.text(sql))
             stock = result.first()
             if stock.quantity:
-                sql = f"SELECT * FROM cart_contents WHERE cart_id = {cart_id}, potion_sku = '{item_sku}'; "
+                sql = f"SELECT * FROM cart_contents WHERE cart_id = {cart_id} AND potion_sku = '{item_sku}'; "
                 result = connection.execute(sqlalchemy.text(sql))
                 record = result.first()
                 if record: # if updating the quantity asked for
                     sql = f"UPDATE cart_contents SET quantity_requested = {cart_item.quantity} "
-                    sql += f"WHERE id = {cart_id}, potion_sku = '{item_sku}'; "
+                    sql += f"WHERE id = {cart_id} AND potion_sku = '{item_sku}'; "
                 else: # adding new item to cart
                     sql = f"INSERT INTO cart_contents (cart_id, potion_sku, quantity) "
                     sql += f"VALUES ({cart_id}, '{item_sku}', {cart_item.quantity})"
