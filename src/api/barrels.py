@@ -123,24 +123,23 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 barrel = None
                 while (len(options) > 0):
                     options = list_viable(gold, options) # check what options remain with current gold
-                    print(f"Priority level {i}, value {priority[i]}")
+                    print(f"Priority position {i}, value {priority[i]}")
                     match priority[i]:
                         case Color.RED:
                             barrel = look_for("RED", options)
-                            print(f"Checked Red: {barrel}")
+                            print(f"Checked options for Red: {barrel}")
                         case Color.GREEN:
                             barrel = look_for("GREEN", options)
-                            print(f"Checked Green: {barrel}")
+                            print(f"Checked options for Green: {barrel}")
                         case Color.BLUE:
                             barrel = look_for("BLUE", options)
-                            print(f"Checked Blue: {barrel}")
+                            print(f"Checked options for Blue: {barrel}")
                         case Color.DARK:
                             barrel = look_for("DARK", options)
-                            print(f"Checked Dark: {barrel}")
+                            print(f"Checked options for Dark: {barrel}")
                     i += 1 # Increment through priority list
                     if i == NUM_COLORS: # Check if need to cycle through again
                         i = 0
-                        break # TODO: testing
                     if barrel is None: # if there are no options for that color
                         continue
                     gold -= barrel.price
