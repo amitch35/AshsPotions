@@ -117,11 +117,12 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             options = list_viable(gold, wholesale_catalog) # check afford and quantity in catalog
             if len(options) > 0:
                 priority = list_priority()
+                print(f"priority list: {priority}")
                 i = 0
                 barrel = None
                 while (len(options) > 0):
                     options = list_viable(gold, options) # check what options remain with current gold
-                    print(f"Priority {i}")
+                    print(f"Priority level {i}, value {priority[i]}")
                     match priority[i]:
                         case Color.RED:
                             barrel = look_for("RED", options)
