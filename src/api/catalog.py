@@ -16,16 +16,14 @@ def get_catalog():
     with db.engine.begin() as connection:
         sql = "SELECT * FROM potions_inventory WHERE quantity > 0 ORDER BY quantity desc; "
         result = connection.execute(sqlalchemy.text(sql))
-        record = result.first()
         catalog = []
-        if record:
-            for potion in result:
-                # TODO: max of 20 items for catalog
-                catalog.append({
-                            "sku": potion.sku,
-                            "name": potion.name,
-                            "quantity": potion.quantity,
-                            "price": potion.price,
-                            "potion_type": [potion.red, potion.green, potion.blue, potion.dark],
-                        })
+        for potion in result:
+            # TODO: max of 20 items for catalog
+            catalog.append({
+                        "sku": potion.sku,
+                        "name": potion.name,
+                        "quantity": potion.quantity,
+                        "price": potion.price,
+                        "potion_type": [potion.red, potion.green, potion.blue, potion.dark],
+                    })
         return catalog
