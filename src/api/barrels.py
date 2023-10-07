@@ -129,11 +129,11 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                             barrel = look_for("BLUE", options)
                         case Color.DARK:
                             barrel = look_for("DARK", options)
+                    print(f"{i} Barrel: {barrel}")
                     i += 1 # Increment through priority list
                     if i == NUM_COLORS: # Check if need to cycle through again
                         i = 0
                     if barrel is None: # if there are no options for that color
-                        return []
                         continue
                     gold -= barrel.price
                     # Check if there is a Barrel with the same SKU already in barrel_plan
@@ -141,6 +141,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                     if index:
                         barrel_plan[index].quantity += 1
                     else:
+                        print(f"Barrel added to plan: {barrel.sku}")
                         barrel_plan.append({
                             "sku": barrel.sku,
                             "quantity": 1,
