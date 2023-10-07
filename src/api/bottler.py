@@ -36,12 +36,13 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
             for potion in potions_delivered:
                 print(f"Handling potion type: [{potion.potion_type[Color.RED]}, {potion.potion_type[Color.GREEN]}, {potion.potion_type[Color.BLUE]}, {potion.potion_type[Color.DARK]}]")
                 print(f"Quantity Recieved: {potion.quantity}")
-                red_ml_mixed += potion.potion_type[Color.RED] * potion.quantity
-                green_ml_mixed += potion.potion_type[Color.GREEN] * potion.quantity
-                blue_ml_mixed += potion.potion_type[Color.BLUE] * potion.quantity
-                dark_ml_mixed += potion.potion_type[Color.DARK] * potion.quantity
+                num_potions = potion.quantity
+                red_ml_mixed += potion.potion_type[Color.RED] * num_potions
+                green_ml_mixed += potion.potion_type[Color.GREEN] * num_potions
+                blue_ml_mixed += potion.potion_type[Color.BLUE] * num_potions
+                dark_ml_mixed += potion.potion_type[Color.DARK] * num_potions
                 sql += "UPDATE potions_inventory "
-                sql += f"SET quantity = quantity + {potion.quantity} "
+                sql += f"SET quantity = quantity + {num_potions} "
                 sql += f"WHERE red = {potion.potion_type[Color.RED]} AND green = {potion.potion_type[Color.GREEN]} AND "
                 sql += f"blue = {potion.potion_type[Color.BLUE]} AND dark = {potion.potion_type[Color.DARK]}; "
                 connection.execute(sqlalchemy.text(sql))
