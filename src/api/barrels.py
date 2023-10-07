@@ -118,6 +118,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             if len(options) > 0:
                 priority = list_priority()
                 print(f"priority list: {priority}")
+                print(f"Red = {Color.RED}, Green = {Color.GREEN}, Blue = {Color.BLUE}, Dark = {Color.DARK}")
                 i = 0
                 barrel = None
                 while (len(options) > 0):
