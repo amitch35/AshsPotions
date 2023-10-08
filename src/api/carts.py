@@ -20,12 +20,14 @@ class NewCart(BaseModel):
 def create_cart(new_cart: NewCart):
     """ """
     with db.engine.begin() as connection:
+        print(f"Creating cart for: {new_cart.customer}")
         sql = f"INSERT INTO shopping_carts (customer) VALUES ('{new_cart.customer}');"
         connection.execute(sqlalchemy.text(sql))
         sql = f"SELECT * FROM shopping_carts WHERE customer = '{new_cart.customer}' ORDER BY id desc"
         result = connection.execute(sqlalchemy.text(sql))
         record = result.first()
-    return {f"cart_id: {record.id}"}
+        print(f"{new_cart.customer} got cart id: {record.id}")
+    return {"cart_id": record.id}
 
 
 @router.get("/{cart_id}")
@@ -58,7 +60,7 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
             if cart_item.quantity == 0: # if requesting 0 potions
                 sql = f"DELETE FROM cart_contents WHERE cart_id = {cart_id} AND potion_sku = '{item_sku}'; "
                 connection.execute(sqlalchemy.text(sql))
-                return "OK"
+                return {"success": True}
             # check if SKU is an item that is offered in shop catalog
             sql = f"SELECT quantity FROM potions_inventory WHERE sku = '{item_sku}'; "
             result = connection.execute(sqlalchemy.text(sql))
@@ -76,13 +78,13 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
                     sql = f"INSERT INTO cart_contents (cart_id, potion_sku, quantity_requested) "
                     sql += f"VALUES ({cart_id}, '{item_sku}', {cart_item.quantity})"
                 connection.execute(sqlalchemy.text(sql))
-                return "OK"
+                return {"success": True}
             else:
                 print(f"Requested item, with SKU: {item_sku} is not offered")
-                return "No matching sku found in catalog or out of stock"
+                return {"success": False}
         else:
             print(f"Cart with id {cart_id} does not exist")
-            return "Cart not found"
+            return {"success": False}
 
 
 class CartCheckout(BaseModel):
