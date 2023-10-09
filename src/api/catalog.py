@@ -12,9 +12,9 @@ def get_catalog():
     """
 
     # Can return a max of 20 items.
-
+    print("----Catalog----")
     with db.engine.begin() as connection:
-        sql = "SELECT * FROM potions_inventory WHERE quantity > 0 ORDER BY quantity desc; "
+        sql = "SELECT * FROM potions WHERE quantity > 0 ORDER BY quantity desc; "
         result = connection.execute(sqlalchemy.text(sql))
         catalog = []
         for potion in result:
@@ -26,4 +26,5 @@ def get_catalog():
                         "price": potion.price,
                         "potion_type": [potion.red, potion.green, potion.blue, potion.dark],
                     })
+            print(catalog)
         return catalog

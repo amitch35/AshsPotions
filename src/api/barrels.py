@@ -37,7 +37,7 @@ def list_priority():
     based on how much of each type of potion are in the inventory """
     with db.engine.begin() as connection:
         priority_list = []
-        sql = "SELECT * FROM potions_inventory ORDER BY quantity"
+        sql = "SELECT * FROM potions ORDER BY quantity"
         result = connection.execute(sqlalchemy.text(sql))
         for record in result:
             potion_type = [record.red, record.green, record.blue, record.dark]
@@ -69,6 +69,7 @@ def look_for(color: str, options: list[Barrel]):
 @router.post("/deliver")
 def post_deliver_barrels(barrels_delivered: list[Barrel]):
     """ """
+    print("----Barrels Deliver----")
     print(barrels_delivered)
     if barrels_delivered:
         red_ml_received = 0
@@ -104,6 +105,8 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
 @router.post("/plan")
 def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     """ """
+    print("----Barrels Plan----")
+    print("Wholesale Catalog: ")
     print(wholesale_catalog)
 
     with db.engine.begin() as connection:

@@ -24,6 +24,7 @@ class PotionInventory(BaseModel):
 @router.post("/deliver")
 def post_deliver_bottles(potions_delivered: list[PotionInventory]):
     """ """
+    print("----Bottler Deliver----")
     print(f"Potions Delivered: {potions_delivered}")
     if potions_delivered:
         with db.engine.begin() as connection:
@@ -40,7 +41,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
                 green_ml_mixed += potion.potion_type[Color.GREEN] * num_potions
                 blue_ml_mixed += potion.potion_type[Color.BLUE] * num_potions
                 dark_ml_mixed += potion.potion_type[Color.DARK] * num_potions
-                sql += "UPDATE potions_inventory "
+                sql += "UPDATE potions "
                 sql += f"SET quantity = quantity + {num_potions} "
                 sql += f"WHERE red = {potion.potion_type[Color.RED]} AND green = {potion.potion_type[Color.GREEN]} AND "
                 sql += f"blue = {potion.potion_type[Color.BLUE]} AND dark = {potion.potion_type[Color.DARK]}; "
@@ -49,7 +50,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
             sql += f"num_blue_ml = num_blue_ml - {blue_ml_mixed}, num_dark_ml = num_dark_ml - {dark_ml_mixed};"
             connection.execute(sqlalchemy.text(sql))
             # Update total potions count in global inventory
-            sql = f"SELECT * FROM potions_inventory; "
+            sql = f"SELECT * FROM potions; "
             result = connection.execute(sqlalchemy.text(sql))
             total = 0
             for record in result:
@@ -72,6 +73,7 @@ def get_bottle_plan():
     # Expressed in integers from 1 to 100 that must sum up to 100.
 
     # Initial logic: bottle all barrels into potions.
+    print("----Bottler Plan----")
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
         inv = result.first() # inventory is on a single row

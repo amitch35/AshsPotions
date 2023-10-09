@@ -19,6 +19,7 @@ class NewCart(BaseModel):
 @router.post("/")
 def create_cart(new_cart: NewCart):
     """ """
+    print("----New Cart----")
     with db.engine.begin() as connection:
         print(f"Creating cart for: {new_cart.customer}")
         sql = f"INSERT INTO shopping_carts (customer) VALUES ('{new_cart.customer}');"
@@ -33,6 +34,7 @@ def create_cart(new_cart: NewCart):
 @router.get("/{cart_id}")
 def get_cart(cart_id: int):
     """ """
+    print("----Get Cart----")
     with db.engine.begin() as connection:
         sql = f"SELECT * FROM shopping_carts WHERE id = {cart_id}"
         result = connection.execute(sqlalchemy.text(sql))
@@ -52,6 +54,7 @@ class CartItem(BaseModel):
 @router.post("/{cart_id}/items/{item_sku}")
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """ """
+    print("----Add to Cart----")
     with db.engine.begin() as connection:
         sql = f"SELECT * FROM shopping_carts WHERE id = {cart_id}"
         result = connection.execute(sqlalchemy.text(sql))
@@ -62,7 +65,7 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
                 connection.execute(sqlalchemy.text(sql))
                 return {"success": True}
             # check if SKU is an item that is offered in shop catalog
-            sql = f"SELECT quantity FROM potions_inventory WHERE sku = '{item_sku}'; "
+            sql = f"SELECT quantity FROM potions WHERE sku = '{item_sku}'; "
             result = connection.execute(sqlalchemy.text(sql))
             stock = result.first()
             if stock.quantity:
@@ -94,6 +97,7 @@ class CartCheckout(BaseModel):
 @router.post("/{cart_id}/checkout")
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
+    print("----Cart Checkout----")
     with db.engine.begin() as connection:
         sql = f"SELECT * FROM shopping_carts WHERE id = {cart_id}; "
         result = connection.execute(sqlalchemy.text(sql))
@@ -101,7 +105,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         print(f"Cart {cart_id}: {cart}")
         if cart: # if there exists a cart with the given id
             sql = f"SELECT * FROM cart_contents AS cnt "
-            sql += f"JOIN potions_inventory AS pot ON cnt.potion_sku = pot.sku "
+            sql += f"JOIN potions AS pot ON cnt.potion_sku = pot.sku "
             sql += f"WHERE cart_id = {cart_id}; "
             result = connection.execute(sqlalchemy.text(sql))
             cart_content = result.first()
@@ -129,7 +133,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                     transaction = True
                     sql = f"UPDATE global_inventory SET gold = gold + {total}; "
                     for record in result:
-                        sql += f"UPDATE potions_inventory "
+                        sql += f"UPDATE potions "
                         sql += f"SET quantity = quantity - {record.quantity_requested} WHERE sku = '{record.sku}'; "
                 else:
                     sql = ""
@@ -143,7 +147,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             connection.execute(sqlalchemy.text(sql))
 
             # Update total potions count in global inventory
-            sql = f"SELECT * FROM potions_inventory; "
+            sql = f"SELECT * FROM potions; "
             result = connection.execute(sqlalchemy.text(sql))
             num_potions = 0
             for record in result:

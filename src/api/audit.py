@@ -13,7 +13,7 @@ router = APIRouter(
 
 def update_potions_count():
     with db.engine.begin() as connection:
-        sql = f"SELECT * FROM potions_inventory; "
+        sql = f"SELECT * FROM potions; "
         result = connection.execute(sqlalchemy.text(sql))
         total = 0
         for record in result:
@@ -25,6 +25,7 @@ def update_potions_count():
 @router.get("/inventory")
 def get_inventory():
     """ """
+    print("----Get Inventory----")
     update_potions_count()
     with db.engine.begin() as connection:
         result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory;"))
@@ -43,6 +44,7 @@ class Result(BaseModel):
 @router.post("/results")
 def post_audit_results(audit_explanation: Result):
     """ """
-    print(audit_explanation)
+    print("----Audit Results----")
+    print(f"Gold match: {audit_explanation.gold_match}\nBarrels Match: {audit_explanation.barrels_match}\nPotions Match: {audit_explanation.potions_match}")
 
     return "OK"
