@@ -13,6 +13,7 @@ router = APIRouter(
 class NewCart(BaseModel):
     customer: str
 
+REQUESTED_TOO_MANY_POTIONS = 2004
 
 @router.post("/")
 def create_cart(new_cart: NewCart):
@@ -90,7 +91,6 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
 
 class CartCheckout(BaseModel):
     payment: str
-    gold_paid: int
 
 @router.post("/{cart_id}/checkout")
 def checkout(cart_id: int, cart_checkout: CartCheckout):
@@ -119,31 +119,31 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                         # TODO: Instead of deleting make a transations table
                         #sql = f"DELETE FROM shopping_carts WHERE id = {cart_id}; " 
                         sql = f"INSERT INTO transactions (cart_id, success, payment, gold_paid) "
-                        sql += f"VALUES ({cart_id}, {transaction}, '{cart_checkout.payment}', {cart_checkout.gold_paid}); "
+                        sql += f"VALUES ({cart_id}, {transaction}, '{cart_checkout.payment}', {REQUESTED_TOO_MANY_POTIONS}); "
                         connection.execute(sqlalchemy.text(sql))
                         return "Insufficient Potion Stock"
                     selling += record.quantity_requested
                     total += record.price * record.quantity_requested
                 # execute transaction if paid enough
-                if cart_checkout.gold_paid >= total:
-                    print(f"Payment was sufficient, completing transaction")
-                    result = connection.execute(sqlalchemy.text(sql))
-                    transaction = True
-                    sql = f"UPDATE global_inventory SET gold = gold + {total}; "
-                    for record in result:
-                        sql += f"UPDATE potions "
-                        sql += f"SET quantity = quantity - {record.quantity_requested} WHERE sku = '{record.sku}'; "
-                else:
-                    sql = ""
-                    print(f"Cart with id {cart_id} did not pay enough for potions requested")
-                    selling = 0
-                    total = 0
+                # if cart_checkout.gold_paid >= total:
+                print(f"Payment was sufficient, completing transaction")
+                result = connection.execute(sqlalchemy.text(sql))
+                transaction = True
+                sql = f"UPDATE global_inventory SET gold = gold + {total}; "
+                for record in result:
+                    sql += f"UPDATE potions "
+                    sql += f"SET quantity = quantity - {record.quantity_requested} WHERE sku = '{record.sku}'; "
+                # else:
+                #     sql = ""
+                #     print(f"Cart with id {cart_id} did not pay enough for potions requested")
+                #     selling = 0
+                #     total = 0
             else:
                 sql = ""
                 print(f"Cart with id {cart_id} was empty")
             #sql += f"DELETE FROM shopping_carts WHERE id = {cart_id}; " 
             sql += f"INSERT INTO transactions (cart_id, success, payment, gold_paid) "
-            sql += f"VALUES ({cart_id}, {transaction}, '{cart_checkout.payment}', {cart_checkout.gold_paid}); "
+            sql += f"VALUES ({cart_id}, {transaction}, '{cart_checkout.payment}', {total}); "
             connection.execute(sqlalchemy.text(sql))
 
             # Update total potions count in global inventory
