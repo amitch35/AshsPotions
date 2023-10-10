@@ -10,8 +10,6 @@ router = APIRouter(
     dependencies=[Depends(auth.get_api_key)],
 )
 
-RED_PRICE = 50
-
 class NewCart(BaseModel):
     customer: str
 
@@ -118,12 +116,12 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 for record in result:
                     if record.quantity < record.quantity_requested:
                         print(f"Cart with id {cart_id} requested too many potions (insufficient stock)")
-                        sql = f"DELETE FROM shopping_carts WHERE id = {cart_id}; " 
+                        # TODO: Instead of deleting make a transations table
+                        #sql = f"DELETE FROM shopping_carts WHERE id = {cart_id}; " 
+                        sql = f"INSERT INTO transactions (cart_id, success, payment, gold_paid) "
+                        sql += f"VALUES ({cart_id}, {transaction}, '{cart_checkout.payment}', {cart_checkout.gold_paid}); "
                         connection.execute(sqlalchemy.text(sql))
                         return "Insufficient Potion Stock"
-                        # raise HTTPException(
-                        #     status_code=status.HTTP_401_UNAUTHORIZED, detail="Forbidden: insufficient potion stock"
-                        # )
                     selling += record.quantity_requested
                     total += record.price * record.quantity_requested
                 # execute transaction if paid enough
@@ -143,7 +141,9 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             else:
                 sql = ""
                 print(f"Cart with id {cart_id} was empty")
-            sql += f"DELETE FROM shopping_carts WHERE id = {cart_id}; " 
+            #sql += f"DELETE FROM shopping_carts WHERE id = {cart_id}; " 
+            sql += f"INSERT INTO transactions (cart_id, success, payment, gold_paid) "
+            sql += f"VALUES ({cart_id}, {transaction}, '{cart_checkout.payment}', {cart_checkout.gold_paid}); "
             connection.execute(sqlalchemy.text(sql))
 
             # Update total potions count in global inventory

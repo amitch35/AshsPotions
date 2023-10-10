@@ -46,5 +46,6 @@ def post_audit_results(audit_explanation: Result):
     """ """
     print("----Audit Results----")
     print(f"Gold match: {audit_explanation.gold_match}\nBarrels Match: {audit_explanation.barrels_match}\nPotions Match: {audit_explanation.potions_match}")
+    print(audit_explanation)
 
     return "OK"
