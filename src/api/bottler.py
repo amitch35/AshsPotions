@@ -11,6 +11,8 @@ class Color(IntEnum):
     BLUE = 2
     DARK = 3
 
+BOTTLE_THRESHOLD = 20
+
 router = APIRouter(
     prefix="/bottler",
     tags=["bottler"],
