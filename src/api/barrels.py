@@ -5,8 +5,9 @@ import sqlalchemy
 from src import database as db
 from src.api.bottler import Color
 
-MAX_PURCHASE_NUM = 2
+PURCHASE_THRESHOLD = 150
 NUM_COLORS = 4
+
 
 router = APIRouter(
     prefix="/barrels",
@@ -113,7 +114,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         sql = "SELECT * FROM global_inventory"
         result = connection.execute(sqlalchemy.text(sql))
         inv = result.first() # inventory is on a single row
-        if inv.num_potions < 35:
+        if inv.num_potions < PURCHASE_THRESHOLD:
             barrel_plan = []
             gold = inv.gold
             options = list_viable(gold, wholesale_catalog) # check afford and quantity in catalog
