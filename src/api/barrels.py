@@ -158,7 +158,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             else:
                 print("Could not afford any barrels or none available")
         else:
-            print(f"Current inventory sufficient -> {inv.num_red_potions} red potions")
+            print(f"Current inventory sufficient -> {inv.num_potions} potions")
         return []
 
 
