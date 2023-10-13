@@ -153,7 +153,6 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                     if index is not None:
                         print("Barrel already in plan")
                         wholesale_barrel = next((bar for bar in wholesale_catalog if bar.sku == barrel.sku), None)
-                        print(f"In wholesale {wholesale_barrel.quantity}, Current ask: {barrel_plan[index].quantity}")
                         if wholesale_barrel.quantity == barrel_plan[index].quantity: # If already asking for max offered
                             print(f"Already asking for all available {barrel.sku}, looking for other options")
                             options = [bar for bar in options if bar.sku != wholesale_barrel.sku] # Remove barrel from options
