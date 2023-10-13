@@ -117,7 +117,8 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         if inv.num_potions < PURCHASE_THRESHOLD:
             barrel_plan = []
             gold = inv.gold
-            options = list_viable(gold, wholesale_catalog) # check afford and quantity in catalog
+            options = wholesale_catalog.copy()
+            options = list_viable(gold, options) # check afford and quantity in catalog
             if len(options) > 0:
                 priority = list_priority()
                 print(f"priority list: {priority}")
