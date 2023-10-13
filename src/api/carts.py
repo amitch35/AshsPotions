@@ -123,7 +123,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                     selling += record.quantity_requested
                     total += record.price * record.quantity_requested
                 # execute transaction 
-                print(f"Payment was sufficient, completing transaction")
+                print(f"Cart {cart_id} Completing transaction for {cart.customer}")
                 result = connection.execute(sqlalchemy.text(sql))
                 transaction = True
                 sql = f"UPDATE global_inventory SET gold = gold + {total}; "
