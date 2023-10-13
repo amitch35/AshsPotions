@@ -4,6 +4,7 @@ from src.api import auth
 import sqlalchemy
 from src import database as db
 from src.api.bottler import Color
+import copy
 
 PURCHASE_THRESHOLD = 150
 NUM_COLORS = 4
@@ -117,7 +118,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         if inv.num_potions < PURCHASE_THRESHOLD:
             barrel_plan = []
             gold = inv.gold
-            options = wholesale_catalog.copy()
+            options = copy.deepcopy(wholesale_catalog)
             options = list_viable(gold, options) # check afford and quantity in catalog
             if len(options) > 0:
                 priority = list_priority()
