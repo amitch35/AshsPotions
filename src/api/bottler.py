@@ -12,6 +12,7 @@ class Color(IntEnum):
     DARK = 3
 
 BOTTLE_THRESHOLD = 20
+MAX_BOTTLE_NUM = 99999
 
 router = APIRouter(
     prefix="/bottler",
@@ -77,45 +78,78 @@ def get_bottle_plan():
     # Initial logic: bottle all barrels into potions.
     print("----Bottler Plan----")
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("SELECT * FROM global_inventory"))
+        sql = "SELECT * FROM global_inventory"
+        result = connection.execute(sqlalchemy.text(sql))
         inv = result.first() # inventory is on a single row
+        sql = "SELECT * FROM potions ORDER BY quantity"
+        result = connection.execute(sqlalchemy.text(sql))
         bottle_plan = []
-        if inv.num_red_ml >= 100:
-            num_potions = (inv.num_red_ml // 100)
-            print(f"Plan to bottle {num_potions} red potions")
-            bottle_plan.append({
-                    "potion_type": [100, 0, 0, 0],
-                    "quantity": num_potions,
-                })
-        else:
-            print("Not enough red ml for bottling")
-        if inv.num_green_ml >= 100:
-            num_potions = (inv.num_green_ml // 100)
-            print(f"Plan to bottle {num_potions} green potions")
-            bottle_plan.append({
-                    "potion_type": [0, 100, 0, 0],
-                    "quantity": num_potions,
-                })
-        else:
-            print("Not enough green ml for bottling")
-        if inv.num_blue_ml >= 100:
-            num_potions = (inv.num_blue_ml // 100)
-            print(f"Plan to bottle {num_potions} blue potions")
-            bottle_plan.append({
-                    "potion_type": [0, 0, 100, 0],
-                    "quantity": num_potions,
-                })
-        else:
-            print("Not enough blue ml for bottling")
-        if inv.num_dark_ml >= 100:
-            num_potions = (inv.num_dark_ml // 100)
-            print(f"Plan to bottle {num_potions} dark potions")
-            bottle_plan.append({
-                    "potion_type": [0, 0, 0, 100],
-                    "quantity": num_potions,
-                })
-        else:
-            print("Not enough dark ml for bottling")
+        for potion in result:
+            if potion.quantity < BOTTLE_THRESHOLD:
+                if potion.red > 0:
+                    red_ok = (inv.num_red_ml // potion.red)
+                else:
+                    red_ok = MAX_BOTTLE_NUM
+                if potion.green > 0:
+                    green_ok = (inv.num_green_ml // potion.green)
+                else:
+                    green_ok = MAX_BOTTLE_NUM
+                if potion.blue > 0:
+                    blue_ok = (inv.num_blue_ml // potion.blue)
+                else:
+                    blue_ok = MAX_BOTTLE_NUM
+                if potion.dark > 0:
+                    dark_ok = (inv.num_dark_ml // potion.dark)
+                else:
+                    dark_ok = MAX_BOTTLE_NUM
+                #if (red_ok > 0) and green_ok and blue_ok and dark_ok:
+                num_potions = min(red_ok, green_ok, blue_ok, dark_ok)
+                if num_potions > 0:
+                    print(f"Plan to bottle {num_potions} {potion.name} potions")
+                    bottle_plan.append({
+                        "potion_type": [potion.red, potion.green, potion.blue, potion.dark],
+                        "quantity": num_potions,
+                    })
+                else:
+                    print(f"Not enough ml to bottle {potion.name}")
         return bottle_plan
+
+        # if inv.num_red_ml >= 100:
+        #     num_potions = (inv.num_red_ml // 100)
+        #     print(f"Plan to bottle {num_potions} red potions")
+        #     bottle_plan.append({
+        #             "potion_type": [100, 0, 0, 0],
+        #             "quantity": num_potions,
+        #         })
+        # else:
+        #     print("Not enough red ml for bottling")
+        # if inv.num_green_ml >= 100:
+        #     num_potions = (inv.num_green_ml // 100)
+        #     print(f"Plan to bottle {num_potions} green potions")
+        #     bottle_plan.append({
+        #             "potion_type": [0, 100, 0, 0],
+        #             "quantity": num_potions,
+        #         })
+        # else:
+        #     print("Not enough green ml for bottling")
+        # if inv.num_blue_ml >= 100:
+        #     num_potions = (inv.num_blue_ml // 100)
+        #     print(f"Plan to bottle {num_potions} blue potions")
+        #     bottle_plan.append({
+        #             "potion_type": [0, 0, 100, 0],
+        #             "quantity": num_potions,
+        #         })
+        # else:
+        #     print("Not enough blue ml for bottling")
+        # if inv.num_dark_ml >= 100:
+        #     num_potions = (inv.num_dark_ml // 100)
+        #     print(f"Plan to bottle {num_potions} dark potions")
+        #     bottle_plan.append({
+        #             "potion_type": [0, 0, 0, 100],
+        #             "quantity": num_potions,
+        #         })
+        # else:
+        #     print("Not enough dark ml for bottling")
+        # return bottle_plan
 
 
