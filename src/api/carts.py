@@ -116,16 +116,13 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 for record in result:
                     if record.quantity < record.quantity_requested:
                         print(f"Cart with id {cart_id} requested too many potions (insufficient stock)")
-                        # TODO: Instead of deleting make a transations table
-                        #sql = f"DELETE FROM shopping_carts WHERE id = {cart_id}; " 
                         sql = f"INSERT INTO transactions (cart_id, success, payment, gold_paid) "
                         sql += f"VALUES ({cart_id}, {transaction}, '{cart_checkout.payment}', {REQUESTED_TOO_MANY_POTIONS}); "
                         connection.execute(sqlalchemy.text(sql))
                         return "Insufficient Potion Stock"
                     selling += record.quantity_requested
                     total += record.price * record.quantity_requested
-                # execute transaction if paid enough
-                # if cart_checkout.gold_paid >= total:
+                # execute transaction 
                 print(f"Payment was sufficient, completing transaction")
                 result = connection.execute(sqlalchemy.text(sql))
                 transaction = True
@@ -133,11 +130,6 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 for record in result:
                     sql += f"UPDATE potions "
                     sql += f"SET quantity = quantity - {record.quantity_requested} WHERE sku = '{record.sku}'; "
-                # else:
-                #     sql = ""
-                #     print(f"Cart with id {cart_id} did not pay enough for potions requested")
-                #     selling = 0
-                #     total = 0
             else:
                 sql = ""
                 print(f"Cart with id {cart_id} was empty")
