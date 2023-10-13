@@ -149,7 +149,14 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                     # TODO: Figure out what to do if I try to buy more than is in wholsale
                     index = next((index for index, item in enumerate(barrel_plan) if item.sku == barrel.sku), None)
                     if index is not None:
-                        barrel_plan[index].quantity += 1
+                        print("Barrel already in plan")
+                        wholesale_barrel = next((bar for bar in wholesale_catalog if bar.sku == barrel.sku), None)
+                        if wholesale_barrel.quantity == barrel_plan[index].quantity: # If already asking for max offered
+                            print(f"Already asking for all available {barrel.sku}, looking for other options")
+                            options = [bar for bar in options if bar.sku != wholesale_barrel.sku] # Remove barrel from options
+                        else: # If there is still stock available
+                            print(f"Adding another {barrel.sku} to plan")
+                            barrel_plan[index].quantity += 1 # add another barrel to plan
                     else:
                         print(f"Barrel added to plan: {barrel.sku}")
                         barrel.quantity = 1 # Only choose to get 1 per iteration
