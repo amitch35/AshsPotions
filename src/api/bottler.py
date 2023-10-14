@@ -84,36 +84,36 @@ def get_bottle_plan():
         sql = "SELECT * FROM potions ORDER BY quantity"
         result = connection.execute(sqlalchemy.text(sql))
         bottle_plan = []
-        red = inv.num_red_ml
-        green = inv.num_green_ml
-        blue = inv.num_blue_ml
-        dark = inv.num_dark_ml
+        inv_red = inv.num_red_ml
+        inv_green = inv.num_green_ml
+        inv_blue = inv.num_blue_ml
+        inv_dark = inv.num_dark_ml
         for potion in result:
             if potion.quantity < BOTTLE_THRESHOLD:
                 if potion.red > 0:
-                    red_ok = (red // potion.red)
+                    red_ok = (inv_red // potion.red)
                 else:
                     red_ok = MAX_BOTTLE_NUM
                 if potion.green > 0:
-                    green_ok = (green // potion.green)
+                    green_ok = (inv_green // potion.green)
                 else:
                     green_ok = MAX_BOTTLE_NUM
                 if potion.blue > 0:
-                    blue_ok = (blue // potion.blue)
+                    blue_ok = (inv_blue // potion.blue)
                 else:
                     blue_ok = MAX_BOTTLE_NUM
                 if potion.dark > 0:
-                    dark_ok = (dark // potion.dark)
+                    dark_ok = (inv_dark // potion.dark)
                 else:
                     dark_ok = MAX_BOTTLE_NUM
                 #if (red_ok > 0) and green_ok and blue_ok and dark_ok:
                 num_potions = min(red_ok, green_ok, blue_ok, dark_ok)
                 if num_potions > 0:
                     print(f"Plan to bottle {num_potions} {potion.name} potions")
-                    red -= (potion.red * num_potions)
-                    green -= (potion.green * num_potions)
-                    blue -= (potion.blue * num_potions)
-                    dark -= (potion.dark * num_potions)
+                    inv_red -= (potion.red * num_potions)
+                    inv_green -= (potion.green * num_potions)
+                    inv_blue -= (potion.blue * num_potions)
+                    inv_dark -= (potion.dark * num_potions)
                     bottle_plan.append({
                         "potion_type": [potion.red, potion.green, potion.blue, potion.dark],
                         "quantity": num_potions,
