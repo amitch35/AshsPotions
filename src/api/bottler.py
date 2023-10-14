@@ -106,20 +106,23 @@ def get_bottle_plan():
                     dark_ok = (inv_dark // potion.dark)
                 else:
                     dark_ok = MAX_BOTTLE_NUM
-                #if (red_ok > 0) and green_ok and blue_ok and dark_ok:
+                # How many potions can be mixed
                 num_potions = min(red_ok, green_ok, blue_ok, dark_ok)
                 if num_potions > 0:
                     # bottle as much as possible up to threshold
-                    num_potions = min(num_potions, BOTTLE_THRESHOLD)
-                    print(f"Plan to bottle {num_potions} {potion.name} potions")
-                    inv_red -= (potion.red * num_potions)
-                    inv_green -= (potion.green * num_potions)
-                    inv_blue -= (potion.blue * num_potions)
-                    inv_dark -= (potion.dark * num_potions)
-                    bottle_plan.append({
-                        "potion_type": [potion.red, potion.green, potion.blue, potion.dark],
-                        "quantity": num_potions,
-                    })
+                    num_potions = min(num_potions, max(0, BOTTLE_THRESHOLD - potion.quantity))
+                    if num_potions > 0:
+                        print(f"Plan to bottle {num_potions} {potion.name} potions")
+                        inv_red -= (potion.red * num_potions)
+                        inv_green -= (potion.green * num_potions)
+                        inv_blue -= (potion.blue * num_potions)
+                        inv_dark -= (potion.dark * num_potions)
+                        bottle_plan.append({
+                            "potion_type": [potion.red, potion.green, potion.blue, potion.dark],
+                            "quantity": num_potions,
+                        })
+                    else: # If inventory alread has more than threshold
+                        print(f"No need to bottle {potion.name} with {potion.quantity} in stock")
                 else:
                     print(f"Not enough ml to bottle {potion.name}")
         return bottle_plan
