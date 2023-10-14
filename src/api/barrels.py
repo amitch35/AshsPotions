@@ -7,6 +7,7 @@ from src.api.bottler import Color
 import copy
 
 PURCHASE_THRESHOLD = 75
+ML_THRESHOLD = 10000
 NUM_COLORS = 4
 
 
@@ -67,6 +68,13 @@ def look_for(color: str, options: list[Barrel]):
     else:
         # If no matching barrels were found
         return None
+    
+def remove_all(color: str, options: list[Barrel]):
+    """ removes all barrels of the given color from the given list """
+    barrel = look_for(color, options)
+    while barrel is not None:
+        options = [bar for bar in options if bar.sku != barrel.sku] # Remove barrel from options
+        barrel = look_for(color, options)
 
 @router.post("/deliver")
 def post_deliver_barrels(barrels_delivered: list[Barrel]):
@@ -130,17 +138,43 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                     print(f"Priority position {i}, value {priority[i]}")
                     match priority[i]:
                         case Color.RED:
-                            barrel = look_for("RED", options)
-                            print(f"Checked options for Red: {barrel}")
+                            if inv.num_red_ml > ML_THRESHOLD:
+                                priority[i] = None
+                                remove_all("RED", options)
+                                barrel = None
+                                print(f"Alread have enough red ml: {inv.num_red_ml}")
+                            else:
+                                barrel = look_for("RED", options)
+                                print(f"Checked options for Red: {barrel}")
                         case Color.GREEN:
-                            barrel = look_for("GREEN", options)
-                            print(f"Checked options for Green: {barrel}")
+                            if inv.num_green_ml > ML_THRESHOLD:
+                                priority[i] = None
+                                remove_all("GREEN", options)
+                                barrel = None
+                                print(f"Alread have enough green ml: {inv.num_red_ml}")
+                            else:
+                                barrel = look_for("GREEN", options)
+                                print(f"Checked options for Green: {barrel}")
                         case Color.BLUE:
-                            barrel = look_for("BLUE", options)
-                            print(f"Checked options for Blue: {barrel}")
+                            if inv.num_blue_ml > ML_THRESHOLD:
+                                priority[i] = None
+                                remove_all("BLUE", options)
+                                barrel = None
+                                print(f"Alread have enough blue ml: {inv.num_red_ml}")
+                            else:
+                                barrel = look_for("BLUE", options)
+                                print(f"Checked options for Blue: {barrel}")
                         case Color.DARK:
-                            barrel = look_for("DARK", options)
-                            print(f"Checked options for Dark: {barrel}")
+                            if inv.num_dark_ml > ML_THRESHOLD:
+                                priority[i] = None
+                                remove_all("DARK", options)
+                                barrel = None
+                                print(f"Alread have enough dark ml: {inv.num_red_ml}")
+                            else:
+                                barrel = look_for("DARK", options)
+                                print(f"Checked options for Dark: {barrel}")
+                        case None:
+                            barrel = None
                     i += 1 # Increment through priority list
                     if i == NUM_COLORS: # Check if need to cycle through again
                         i = 0
@@ -148,7 +182,6 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                         continue
                     gold -= barrel.price
                     # Check if there is a Barrel with the same SKU already in barrel_plan
-                    # TODO: Figure out what to do if I try to buy more than is in wholsale
                     index = next((index for index, item in enumerate(barrel_plan) if item.sku == barrel.sku), None)
                     if index is not None:
                         print("Barrel already in plan")
