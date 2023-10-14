@@ -6,7 +6,7 @@ from src import database as db
 from src.api.bottler import Color
 import copy
 
-PURCHASE_THRESHOLD = 150
+PURCHASE_THRESHOLD = 75
 NUM_COLORS = 4
 
 
