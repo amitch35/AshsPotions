@@ -109,6 +109,8 @@ def get_bottle_plan():
                 #if (red_ok > 0) and green_ok and blue_ok and dark_ok:
                 num_potions = min(red_ok, green_ok, blue_ok, dark_ok)
                 if num_potions > 0:
+                    # bottle as much as possible up to threshold
+                    num_potions = min(num_potions, BOTTLE_THRESHOLD)
                     print(f"Plan to bottle {num_potions} {potion.name} potions")
                     inv_red -= (potion.red * num_potions)
                     inv_green -= (potion.green * num_potions)
