@@ -74,6 +74,7 @@ def get_bottle_plan():
     # Each bottle has a quantity of what proportion of red, blue, and
     # green potion to add.
     # Expressed in integers from 1 to 100 that must sum up to 100.
+    # Maximum Total Potion Inventory is 300
 
     # Initial logic: bottle all barrels into potions.
     print("----Bottler Plan----")
@@ -126,43 +127,5 @@ def get_bottle_plan():
                 else:
                     print(f"Not enough ml to bottle {potion.name}")
         return bottle_plan
-
-        # if inv.num_red_ml >= 100:
-        #     num_potions = (inv.num_red_ml // 100)
-        #     print(f"Plan to bottle {num_potions} red potions")
-        #     bottle_plan.append({
-        #             "potion_type": [100, 0, 0, 0],
-        #             "quantity": num_potions,
-        #         })
-        # else:
-        #     print("Not enough red ml for bottling")
-        # if inv.num_green_ml >= 100:
-        #     num_potions = (inv.num_green_ml // 100)
-        #     print(f"Plan to bottle {num_potions} green potions")
-        #     bottle_plan.append({
-        #             "potion_type": [0, 100, 0, 0],
-        #             "quantity": num_potions,
-        #         })
-        # else:
-        #     print("Not enough green ml for bottling")
-        # if inv.num_blue_ml >= 100:
-        #     num_potions = (inv.num_blue_ml // 100)
-        #     print(f"Plan to bottle {num_potions} blue potions")
-        #     bottle_plan.append({
-        #             "potion_type": [0, 0, 100, 0],
-        #             "quantity": num_potions,
-        #         })
-        # else:
-        #     print("Not enough blue ml for bottling")
-        # if inv.num_dark_ml >= 100:
-        #     num_potions = (inv.num_dark_ml // 100)
-        #     print(f"Plan to bottle {num_potions} dark potions")
-        #     bottle_plan.append({
-        #             "potion_type": [0, 0, 0, 100],
-        #             "quantity": num_potions,
-        #         })
-        # else:
-        #     print("Not enough dark ml for bottling")
-        # return bottle_plan
 
 
