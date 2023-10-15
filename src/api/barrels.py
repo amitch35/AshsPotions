@@ -171,7 +171,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                             case Color.BLANK:
                                 barrel = None
                         i += 1 # Increment through priority list
-                        if i == NUM_COLORS: # Check if need to cycle through again
+                        if i == len(priority): # Check if need to cycle through again
                             i = 0
                         if barrel is None: # if there are no options for that color
                             priority = [color for color in priority if color != priority[i]]
