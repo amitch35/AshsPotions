@@ -7,6 +7,7 @@ from src.api.bottler import Color
 import copy
 
 PURCHASE_THRESHOLD = 200
+PURCHASE_MAX = 10
 ML_THRESHOLD = 10000
 NUM_COLORS = 4
 
@@ -153,23 +154,51 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                     print(f"Updated Priority list: {priority}")
                     i = 0
                     barrel = None
+                    red_cnt = 0
+                    green_cnt = 0
+                    blue_cnt = 0
+                    dark_cnt = 0
                     while (len(options) > 0):
                         print(f"Remaining number of options: {len(options)}")
                         curr_color = priority[i]
                         print(f"Priority {i}, value {Color(curr_color).name}")
                         match curr_color:
                             case Color.RED:
-                                barrel = look_for("RED", options)
-                                print(f"Checked options for Red: {barrel}")
+                                if red_cnt < PURCHASE_MAX:
+                                    barrel = look_for("RED", options)
+                                    print(f"Checked options for Red: {barrel}")
+                                    red_cnt += 1
+                                else:
+                                    barrel = None
+                                    options = remove_all("RED", options)
+                                    print(f"Getting Sufficient number of red barrels: {PURCHASE_MAX}")
                             case Color.GREEN:
-                                barrel = look_for("GREEN", options)
-                                print(f"Checked options for Green: {barrel}")
+                                if green_cnt < PURCHASE_MAX:
+                                    barrel = look_for("GREEN", options)
+                                    print(f"Checked options for Green: {barrel}")
+                                    green_cnt += 1
+                                else:
+                                    barrel = None
+                                    options = remove_all("GREEN", options)
+                                    print(f"Getting Sufficient number of green barrels: {PURCHASE_MAX}")
                             case Color.BLUE:
-                                barrel = look_for("BLUE", options)
-                                print(f"Checked options for Blue: {barrel}")
+                                if blue_cnt < PURCHASE_MAX:
+                                    barrel = look_for("BLUE", options)
+                                    print(f"Checked options for Blue: {barrel}")
+                                    blue_cnt += 1
+                                else:
+                                    barrel = None
+                                    options = remove_all("BLUE", options)
+                                    print(f"Getting Sufficient number of blue barrels: {PURCHASE_MAX}")
                             case Color.DARK:
-                                barrel = look_for("DARK", options)
-                                print(f"Checked options for Dark: {barrel}")
+                                if dark_cnt < PURCHASE_MAX:
+                                    barrel = look_for("DARK", options)
+                                    print(f"Checked options for Dark: {barrel}")
+                                    dark_cnt += 1
+                                else:
+                                    barrel = None
+                                    options = remove_all("DARK", options)
+                                    print(f"Getting Sufficient number of dark barrels: {PURCHASE_MAX}")
                             case Color.BLANK:
                                 barrel = None
                         i += 1 # Increment through priority list
@@ -178,7 +207,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                         if barrel is None: # if there are no options for that color
                             priority = [color for color in priority if color != curr_color] # remove from priority list
                             i = max(0, i - 1) # move i to accomodate removing from priority list
-                            print(f"Removed {Color(curr_color).name} from priority because no options found")
+                            print(f"Removed {Color(curr_color).name} from priority, no options found")
                             continue
                         gold -= barrel.price
                         # Check if there is a Barrel with the same SKU already in barrel_plan
