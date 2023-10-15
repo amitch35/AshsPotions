@@ -151,7 +151,8 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 i = 0
                 barrel = None
                 while (len(options) > 0):
-                    print(f"Priority position {i}, value {priority[i]}")
+                    print(f"Remaining number of options: {len(options)}")
+                    print(f"Priority position {i}, value {Color(priority[i])}")
                     match priority[i]:
                         case Color.RED:
                             barrel = look_for("RED", options)
