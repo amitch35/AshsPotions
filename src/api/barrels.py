@@ -139,15 +139,15 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 if inv.num_green_ml > ML_THRESHOLD:
                     priority[priority.index(Color.GREEN)] = Color.BLANK
                     remove_all("GREEN", options)
-                    print(f"Alread have enough green ml: {inv.num_red_ml}")
+                    print(f"Alread have enough green ml: {inv.num_green_ml}")
                 if inv.num_blue_ml > ML_THRESHOLD:
                     priority[priority.index(Color.BLUE)] = Color.BLANK
                     remove_all("BLUE", options)
-                    print(f"Alread have enough blue ml: {inv.num_red_ml}")
+                    print(f"Alread have enough blue ml: {inv.num_blue_ml}")
                 if inv.num_dark_ml > ML_THRESHOLD:
                     priority[priority.index(Color.DARK)] = Color.BLANK
                     remove_all("DARK", options)
-                    print(f"Alread have enough dark ml: {inv.num_red_ml}")
+                    print(f"Alread have enough dark ml: {inv.num_dark_ml}")
                 i = 0
                 barrel = None
                 while (len(options) > 0):
