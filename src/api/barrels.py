@@ -148,48 +148,51 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                     priority[priority.index(Color.DARK)] = Color.BLANK
                     remove_all("DARK", options)
                     print(f"Alread have enough dark ml: {inv.num_dark_ml}")
-                i = 0
-                barrel = None
-                while (len(options) > 0):
-                    print(f"Remaining number of options: {len(options)}")
-                    print(f"Priority position {i}, value {Color(priority[i])}")
-                    match priority[i]:
-                        case Color.RED:
-                            barrel = look_for("RED", options)
-                            print(f"Checked options for Red: {barrel}")
-                        case Color.GREEN:
-                            barrel = look_for("GREEN", options)
-                            print(f"Checked options for Green: {barrel}")
-                        case Color.BLUE:
-                            barrel = look_for("BLUE", options)
-                            print(f"Checked options for Blue: {barrel}")
-                        case Color.DARK:
-                            barrel = look_for("DARK", options)
-                            print(f"Checked options for Dark: {barrel}")
-                        case Color.BLANK:
-                            barrel = None
-                    i += 1 # Increment through priority list
-                    if i == NUM_COLORS: # Check if need to cycle through again
-                        i = 0
-                    if barrel is None: # if there are no options for that color
-                        continue
-                    gold -= barrel.price
-                    # Check if there is a Barrel with the same SKU already in barrel_plan
-                    index = next((index for index, item in enumerate(barrel_plan) if item.sku == barrel.sku), None)
-                    if index is not None:
-                        print("Barrel already in plan")
-                        wholesale_barrel = next((bar for bar in wholesale_catalog if bar.sku == barrel.sku), None)
-                        if wholesale_barrel.quantity == barrel_plan[index].quantity: # If already asking for max offered
-                            print(f"Already asking for all available {barrel.sku}, looking for other options")
-                            options = [bar for bar in options if bar.sku != wholesale_barrel.sku] # Remove barrel from options
-                        else: # If there is still stock available
-                            print(f"Adding another {barrel.sku} to plan")
-                            barrel_plan[index].quantity += 1 # add another barrel to plan
-                    else:
-                        print(f"Barrel added to plan: {barrel.sku}")
-                        barrel.quantity = 1 # Only choose to get 1 per iteration
-                        barrel_plan.append(barrel)
-                    options = list_viable(gold, options) # check what options remain with current gold
+                if sum(priority) == (Color.BLANK * 4):
+                    print(f"Current ml inventory sufficient, all ml types above {ML_THRESHOLD}")
+                else:
+                    i = 0
+                    barrel = None
+                    while (len(options) > 0):
+                        print(f"Remaining number of options: {len(options)}")
+                        print(f"Priority position {i}, value {Color(priority[i])}")
+                        match priority[i]:
+                            case Color.RED:
+                                barrel = look_for("RED", options)
+                                print(f"Checked options for Red: {barrel}")
+                            case Color.GREEN:
+                                barrel = look_for("GREEN", options)
+                                print(f"Checked options for Green: {barrel}")
+                            case Color.BLUE:
+                                barrel = look_for("BLUE", options)
+                                print(f"Checked options for Blue: {barrel}")
+                            case Color.DARK:
+                                barrel = look_for("DARK", options)
+                                print(f"Checked options for Dark: {barrel}")
+                            case Color.BLANK:
+                                barrel = None
+                        i += 1 # Increment through priority list
+                        if i == NUM_COLORS: # Check if need to cycle through again
+                            i = 0
+                        if barrel is None: # if there are no options for that color
+                            continue
+                        gold -= barrel.price
+                        # Check if there is a Barrel with the same SKU already in barrel_plan
+                        index = next((index for index, item in enumerate(barrel_plan) if item.sku == barrel.sku), None)
+                        if index is not None:
+                            print("Barrel already in plan")
+                            wholesale_barrel = next((bar for bar in wholesale_catalog if bar.sku == barrel.sku), None)
+                            if wholesale_barrel.quantity == barrel_plan[index].quantity: # If already asking for max offered
+                                print(f"Already asking for all available {barrel.sku}, looking for other options")
+                                options = [bar for bar in options if bar.sku != wholesale_barrel.sku] # Remove barrel from options
+                            else: # If there is still stock available
+                                print(f"Adding another {barrel.sku} to plan")
+                                barrel_plan[index].quantity += 1 # add another barrel to plan
+                        else:
+                            print(f"Barrel added to plan: {barrel.sku}")
+                            barrel.quantity = 1 # Only choose to get 1 per iteration
+                            barrel_plan.append(barrel)
+                        options = list_viable(gold, options) # check what options remain with current gold
                 return ({ "sku": bar.sku, "quantity": bar.quantity, } for bar in barrel_plan)
             else:
                 print("Could not afford any barrels or none available")
