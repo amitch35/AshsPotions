@@ -131,7 +131,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             options = list_viable(gold, options) # check afford and quantity in catalog
             if len(options) > 0:
                 priority = list_priority()
-                print(f"priority list: {priority}")
+                print(f"Priority list: {priority}")
                 print(f"Red = {Color.RED}, Green = {Color.GREEN}, Blue = {Color.BLUE}, Dark = {Color.DARK}")
                 if inv.num_red_ml > ML_THRESHOLD:
                     priority = [color for color in priority if color != Color.RED]
@@ -150,6 +150,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                     options = remove_all("DARK", options)
                     print(f"Alread have enough dark ml: {inv.num_dark_ml}")
                 if len(priority) > 0:
+                    print(f"Updated Priority list: {priority}")
                     i = 0
                     barrel = None
                     while (len(options) > 0):
