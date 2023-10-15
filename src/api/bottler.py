@@ -10,6 +10,7 @@ class Color(IntEnum):
     GREEN = 1
     BLUE = 2
     DARK = 3
+    BLANK = 4
 
 BOTTLE_THRESHOLD = 20
 MAX_BOTTLE_NUM = 99999

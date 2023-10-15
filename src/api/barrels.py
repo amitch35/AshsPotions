@@ -132,48 +132,40 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 priority = list_priority()
                 print(f"priority list: {priority}")
                 print(f"Red = {Color.RED}, Green = {Color.GREEN}, Blue = {Color.BLUE}, Dark = {Color.DARK}")
+                if inv.num_red_ml > ML_THRESHOLD:
+                    priority[priority.index(Color.RED)] = Color.BLANK
+                    remove_all("RED", options)
+                    print(f"Alread have enough red ml: {inv.num_red_ml}")
+                if inv.num_green_ml > ML_THRESHOLD:
+                    priority[priority.index(Color.GREEN)] = Color.BLANK
+                    remove_all("GREEN", options)
+                    print(f"Alread have enough green ml: {inv.num_red_ml}")
+                if inv.num_blue_ml > ML_THRESHOLD:
+                    priority[priority.index(Color.BLUE)] = Color.BLANK
+                    remove_all("BLUE", options)
+                    print(f"Alread have enough blue ml: {inv.num_red_ml}")
+                if inv.num_dark_ml > ML_THRESHOLD:
+                    priority[priority.index(Color.DARK)] = Color.BLANK
+                    remove_all("DARK", options)
+                    print(f"Alread have enough dark ml: {inv.num_red_ml}")
                 i = 0
                 barrel = None
                 while (len(options) > 0):
                     print(f"Priority position {i}, value {priority[i]}")
                     match priority[i]:
                         case Color.RED:
-                            if inv.num_red_ml > ML_THRESHOLD:
-                                priority[i] = None
-                                remove_all("RED", options)
-                                barrel = None
-                                print(f"Alread have enough red ml: {inv.num_red_ml}")
-                            else:
-                                barrel = look_for("RED", options)
-                                print(f"Checked options for Red: {barrel}")
+                            barrel = look_for("RED", options)
+                            print(f"Checked options for Red: {barrel}")
                         case Color.GREEN:
-                            if inv.num_green_ml > ML_THRESHOLD:
-                                priority[i] = None
-                                remove_all("GREEN", options)
-                                barrel = None
-                                print(f"Alread have enough green ml: {inv.num_red_ml}")
-                            else:
-                                barrel = look_for("GREEN", options)
-                                print(f"Checked options for Green: {barrel}")
+                            barrel = look_for("GREEN", options)
+                            print(f"Checked options for Green: {barrel}")
                         case Color.BLUE:
-                            if inv.num_blue_ml > ML_THRESHOLD:
-                                priority[i] = None
-                                remove_all("BLUE", options)
-                                barrel = None
-                                print(f"Alread have enough blue ml: {inv.num_red_ml}")
-                            else:
-                                barrel = look_for("BLUE", options)
-                                print(f"Checked options for Blue: {barrel}")
+                            barrel = look_for("BLUE", options)
+                            print(f"Checked options for Blue: {barrel}")
                         case Color.DARK:
-                            if inv.num_dark_ml > ML_THRESHOLD:
-                                priority[i] = None
-                                remove_all("DARK", options)
-                                barrel = None
-                                print(f"Alread have enough dark ml: {inv.num_red_ml}")
-                            else:
-                                barrel = look_for("DARK", options)
-                                print(f"Checked options for Dark: {barrel}")
-                        case None:
+                            barrel = look_for("DARK", options)
+                            print(f"Checked options for Dark: {barrel}")
+                        case Color.BLANK:
                             barrel = None
                     i += 1 # Increment through priority list
                     if i == NUM_COLORS: # Check if need to cycle through again
