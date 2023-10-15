@@ -149,7 +149,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                     priority = [color for color in priority if color != Color.DARK]
                     options = remove_all("DARK", options)
                     print(f"Alread have enough dark ml: {inv.num_dark_ml}")
-                if priority:
+                if len(priority) > 0:
                     i = 0
                     barrel = None
                     while (len(options) > 0):
