@@ -156,7 +156,8 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                     while (len(options) > 0):
                         print(f"Remaining number of options: {len(options)}")
                         print(f"Priority position {i}, value {Color(priority[i]).name}")
-                        match priority[i]:
+                        curr_color = priority[i]
+                        match curr_color:
                             case Color.RED:
                                 barrel = look_for("RED", options)
                                 print(f"Checked options for Red: {barrel}")
@@ -175,7 +176,8 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                         if i == len(priority): # Check if need to cycle through again
                             i = 0
                         if barrel is None: # if there are no options for that color
-                            priority = [color for color in priority if color != priority[max(0, (i - 1))]]
+                            priority = [color for color in priority if color != curr_color] # remove from priority list
+                            i = max(0, i - 1) # move i to accomodate removing from priority list
                             continue
                         gold -= barrel.price
                         # Check if there is a Barrel with the same SKU already in barrel_plan
