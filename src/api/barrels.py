@@ -75,6 +75,7 @@ def remove_all(color: str, options: list[Barrel]):
     while barrel is not None:
         options = [bar for bar in options if bar.sku != barrel.sku] # Remove barrel from options
         barrel = look_for(color, options)
+    return options
 
 @router.post("/deliver")
 def post_deliver_barrels(barrels_delivered: list[Barrel]):
@@ -134,19 +135,19 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 print(f"Red = {Color.RED}, Green = {Color.GREEN}, Blue = {Color.BLUE}, Dark = {Color.DARK}")
                 if inv.num_red_ml > ML_THRESHOLD:
                     priority[priority.index(Color.RED)] = Color.BLANK
-                    remove_all("RED", options)
+                    options = remove_all("RED", options)
                     print(f"Alread have enough red ml: {inv.num_red_ml}")
                 if inv.num_green_ml > ML_THRESHOLD:
                     priority[priority.index(Color.GREEN)] = Color.BLANK
-                    remove_all("GREEN", options)
+                    options = remove_all("GREEN", options)
                     print(f"Alread have enough green ml: {inv.num_green_ml}")
                 if inv.num_blue_ml > ML_THRESHOLD:
                     priority[priority.index(Color.BLUE)] = Color.BLANK
-                    remove_all("BLUE", options)
+                    options = remove_all("BLUE", options)
                     print(f"Alread have enough blue ml: {inv.num_blue_ml}")
                 if inv.num_dark_ml > ML_THRESHOLD:
                     priority[priority.index(Color.DARK)] = Color.BLANK
-                    remove_all("DARK", options)
+                    options = remove_all("DARK", options)
                     print(f"Alread have enough dark ml: {inv.num_dark_ml}")
                 if sum(priority) == (Color.BLANK * 4):
                     print(f"Current ml inventory sufficient, all ml types above {ML_THRESHOLD}")
