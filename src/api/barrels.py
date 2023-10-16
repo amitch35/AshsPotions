@@ -128,6 +128,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         if inv.num_potions < PURCHASE_THRESHOLD:
             barrel_plan = []
             gold = inv.gold
+            print(f"Available Gold: {gold}")
             options = copy.deepcopy(wholesale_catalog)
             options = list_viable(gold, options) # check afford and quantity in catalog
             if len(options) > 0:
@@ -225,6 +226,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                             print(f"Barrel added to plan: {barrel.sku}")
                             barrel.quantity = 1 # Only choose to get 1 per iteration
                             barrel_plan.append(barrel)
+                        print(f"Remaining Gold: {gold}")
                         options = list_viable(gold, options) # check what options remain with current gold
                 else:
                     print(f"Current inventory sufficient, all ml types above {ML_THRESHOLD}")
