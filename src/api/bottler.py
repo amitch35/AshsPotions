@@ -83,7 +83,7 @@ def get_bottle_plan():
         sql = "SELECT * FROM global_inventory"
         result = connection.execute(sqlalchemy.text(sql))
         inv = result.first() # inventory is on a single row
-        sql = "SELECT * FROM potions ORDER BY quantity"
+        sql = "SELECT * FROM potions ORDER BY quantity, id"
         result = connection.execute(sqlalchemy.text(sql))
         bottle_plan = []
         inv_red = inv.num_red_ml
