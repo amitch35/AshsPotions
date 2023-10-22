@@ -41,7 +41,7 @@ def list_priority():
     based on how much of each type of potion are in the inventory """
     with db.engine.begin() as connection:
         priority_list = []
-        sql = "SELECT * FROM potions ORDER BY quantity"
+        sql = "SELECT * FROM potions ORDER BY quantity, id"
         result = connection.execute(sqlalchemy.text(sql))
         for record in result:
             potion_type = [record.red, record.green, record.blue, record.dark]
