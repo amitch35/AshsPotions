@@ -146,8 +146,9 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                             total += record.price * record.quantity_requested
                         # execute transaction 
                         print(f"Cart {cart_id} Completing transaction for {cart.customer}")
-                        sql = ("INSERT INTO global_inventory (gold) "
-                                f"VALUES ({total}); \n")
+                        sql = ("INSERT INTO global_inventory "
+                            "(gold, num_red_ml, num_green_ml, num_blue_ml, num_dark_ml)"
+                            f" VALUES ({total}, 0, 0, 0, 0); \n")
                         sql += ("INSERT INTO potion_quantities (potion_id, delta) "
                             "SELECT potion_id, - quantity_requested "
                             "FROM cart_contents "
