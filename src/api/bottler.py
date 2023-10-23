@@ -30,7 +30,7 @@ class PotionInventory(BaseModel):
 def post_deliver_bottles(potions_delivered: list[PotionInventory]):
     """ """
     print("----Bottler Deliver----")
-    print(f"Potions Delivered: {potions_delivered}")
+    print(f"Potions Delivered: {len(potions_delivered)}")
     if potions_delivered:
         with db.engine.begin() as connection:
             red_ml_mixed = 0
