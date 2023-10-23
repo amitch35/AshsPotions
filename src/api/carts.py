@@ -22,8 +22,8 @@ def create_cart(new_cart: NewCart):
     print("----New Cart----")
     with db.engine.begin() as connection:
         print(f"Creating cart for: {new_cart.customer}")
-        sql = f"INSERT INTO shopping_carts (customer) VALUES ('{new_cart.customer}') RETURNING id;"
-        new_id = connection.execute(sqlalchemy.text(sql))
+        sql = f"INSERT INTO shopping_carts (customer) VALUES ('{new_cart.customer}') RETURNING shopping_carts.id;"
+        new_id = connection.execute(sqlalchemy.text(sql)).scalar_one()
         print(f"{new_cart.customer} got cart id: {new_id}")
     return {"cart_id": new_id}
 
