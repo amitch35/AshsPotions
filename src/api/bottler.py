@@ -145,7 +145,7 @@ def get_bottle_plan():
             # Order potions by quantity (include name, quantity and ml mix info)
             sql = ("SELECT potions.name, "
                         "potions.red, potions.green, potions.blue, potions.dark, "
-                        "COALESCE(SUM(potion_quantities.delta), 0) AS quantity"
+                        "COALESCE(SUM(potion_quantities.delta), 0) AS quantity "
                     "FROM potions "
                     "LEFT JOIN potion_quantities ON "
                         "potions.id = potion_quantities.potion_id "
