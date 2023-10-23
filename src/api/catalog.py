@@ -16,7 +16,7 @@ def get_catalog():
     print("----Catalog----")
     with db.engine.begin() as connection:
         sql = ("SELECT potions.*, "
-                        "COALESCE(SUM(potion_quantities.delta), 0) AS quantity"
+                        "COALESCE(SUM(potion_quantities.delta), 0) AS quantity "
                     "FROM potions "
                     "JOIN potion_quantities ON "
                         "potions.id = potion_quantities.potion_id "
