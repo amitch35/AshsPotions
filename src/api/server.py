@@ -7,13 +7,13 @@ import logging
 import sys
 
 description = """
-Ash's Potions is a family ecommerce site for all your alchemical needs.
+Ash's Potions is a totally radical potion site where we forge all your alchemical concoctions.
 """
 
 app = FastAPI(
     title="Ash's Potions",
     description=description,
-    version="0.0.1",
+    version="0.4.16",
     terms_of_service="http://example.com/terms/",
     contact={
         "name": "Ash Mitchell",
