@@ -167,7 +167,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                     return {"success": False, "total_potions_bought": 0, "total_gold_paid": 0}
             else:
                 print(f"Cart with id {cart_id} already completed transaction")
-                sql = f"SELECT SUM(potions_requested) FROM cart_contents WHERE cart_id = {cart_id}"
+                sql = f"SELECT SUM(quantity_requested) FROM cart_contents WHERE cart_id = {cart_id}"
                 potions_bought = connection.execute(sqlalchemy.text(sql)).scalar_one()
                 return {"success": prev_transaction.success, "total_potions_bought": potions_bought, "total_gold_paid": prev_transaction.gold_paid}
     except DBAPIError as error:
