@@ -127,10 +127,19 @@ def get_bottle_plan():
     print("----Bottler Plan----")
     try:
         with db.engine.begin() as connection:
-            sql = ("SELECT SUM(gold) AS gold, SUM(pot_qty.delta) AS num_potions, "
-                "SUM(num_red_ml) AS num_red_ml, SUM(num_green_ml) AS num_green_ml, "
-                "SUM(num_blue_ml) AS num_blue_ml, SUM(num_dark_ml) AS num_dark_ml "
-                "FROM global_inventory, potion_quantities AS pot_qty")
+            sql = ("SELECT gold, potion_sum.num_potions, "
+               "num_red_ml, num_green_ml, num_blue_ml, num_dark_ml "
+               "FROM "
+               "(SELECT "
+                    "SUM(gold) AS gold, "
+                    "SUM(num_red_ml) AS num_red_ml, "
+                    "SUM(num_green_ml) AS num_green_ml, "
+                    "SUM(num_blue_ml) AS num_blue_ml, "
+                    "SUM(num_dark_ml) AS num_dark_ml "
+                "FROM global_inventory) as inv, "
+                "(SELECT "
+                    "SUM(delta) AS num_potions "
+                "FROM potion_quantities) as potion_sum;")
             result = connection.execute(sqlalchemy.text(sql))
             inv = result.first() # inventory is on a single row
             # Order potions by quantity (include name, quantity and ml mix info)
