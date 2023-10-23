@@ -41,7 +41,7 @@ def list_priority(potions):
     """ Returns the order in which purchasing berrels should be prioritized 
     based on how much of each type of potion are in the inventory """
     priority_list = []
-    for name, quantity, red, green, blue, dark in potions:
+    for name, red, green, blue, dark, quantity in potions:
         potion_type = [red, green, blue, dark]
         potion_color = potion_type.index(max(potion_type))
         if potion_color not in priority_list:

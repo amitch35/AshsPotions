@@ -72,7 +72,7 @@ def make_bottle_plan(inv, potions):
     inv_green = inv.num_green_ml
     inv_blue = inv.num_blue_ml
     inv_dark = inv.num_dark_ml
-    for name, quantity, red, green, blue, dark in potions:
+    for name, red, green, blue, dark, quantity in potions:
         if quantity < BOTTLE_THRESHOLD:
             if red > 0:
                 red_ok = (inv_red // red)
