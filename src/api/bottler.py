@@ -41,6 +41,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
                         "VALUES ")
             i = 1
             for potion in potions_delivered:
+                i += 1
                 print(f"Handling potion type: [{potion.potion_type[Color.RED]}, {potion.potion_type[Color.GREEN]}, {potion.potion_type[Color.BLUE]}, {potion.potion_type[Color.DARK]}]")
                 print(f"Quantity Recieved: {potion.quantity}")
                 num_potions = potion.quantity
