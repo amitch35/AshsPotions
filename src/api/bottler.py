@@ -37,7 +37,8 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
             green_ml_mixed = 0
             blue_ml_mixed = 0
             dark_ml_mixed = 0
-            sql = ""
+            sql = ("INSERT INTO potion_quantities (potion_id, delta) "
+                        "VALUES ")
             for potion in potions_delivered:
                 print(f"Handling potion type: [{potion.potion_type[Color.RED]}, {potion.potion_type[Color.GREEN]}, {potion.potion_type[Color.BLUE]}, {potion.potion_type[Color.DARK]}]")
                 print(f"Quantity Recieved: {potion.quantity}")
@@ -46,9 +47,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
                 green_ml_mixed += potion.potion_type[Color.GREEN] * num_potions
                 blue_ml_mixed += potion.potion_type[Color.BLUE] * num_potions
                 dark_ml_mixed += potion.potion_type[Color.DARK] * num_potions
-                sql += ("INSERT INTO potion_quantities (potion_id, delta) "
-                        "VALUES ("
-                            "( "
+                sql += ("(( "
                                 "SELECT id FROM potions WHERE "
                                 f"red = {potion.potion_type[Color.RED]} AND "
                                 f"green = {potion.potion_type[Color.GREEN]} AND "
@@ -56,7 +55,8 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
                                 f"dark = {potion.potion_type[Color.DARK]}"
                             "), "
                             f"{num_potions}"
-                        "); ")
+                        "), ")
+            sql += "; "
             sql += ("INSERT INTO global_inventory "
                     "(gold, num_red_ml, num_green_ml, num_blue_ml, num_dark_ml)"
                     f" VALUES (0, - {red_ml_mixed}, - {green_ml_mixed}, "
