@@ -15,7 +15,15 @@ def get_catalog():
     # Can return a max of 6 items.
     print("----Catalog----")
     with db.engine.begin() as connection:
-        sql = f"SELECT * FROM potions WHERE quantity > 0 ORDER BY RANDOM() LIMIT {CATALOG_MAX}; "
+        sql = ("SELECT potions.*, "
+                        "COALESCE(SUM(potion_quantities.delta), 0) AS quantity"
+                    "FROM potions "
+                    "JOIN potion_quantities ON "
+                        "potions.id = potion_quantities.potion_id "
+                    "WHERE quantity > 0 "
+                    "GROUP BY potions.id "
+                    "ORDER BY RANDOM() "
+                    f"LIMIT {CATALOG_MAX}")
         result = connection.execute(sqlalchemy.text(sql))
         catalog = []
         for potion in result:

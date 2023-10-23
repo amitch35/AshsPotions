@@ -3,6 +3,7 @@ from enum import IntEnum
 from pydantic import BaseModel
 from src.api import auth
 import sqlalchemy
+from sqlalchemy.exc import DBAPIError
 from src import database as db
 
 class Color(IntEnum):
@@ -45,25 +46,70 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
                 green_ml_mixed += potion.potion_type[Color.GREEN] * num_potions
                 blue_ml_mixed += potion.potion_type[Color.BLUE] * num_potions
                 dark_ml_mixed += potion.potion_type[Color.DARK] * num_potions
-                sql += "UPDATE potions "
-                sql += f"SET quantity = quantity + {num_potions} "
-                sql += f"WHERE red = {potion.potion_type[Color.RED]} AND green = {potion.potion_type[Color.GREEN]} AND "
-                sql += f"blue = {potion.potion_type[Color.BLUE]} AND dark = {potion.potion_type[Color.DARK]}; "
-            sql += "UPDATE global_inventory "
-            sql += f"SET num_red_ml = num_red_ml - {red_ml_mixed}, num_green_ml = num_green_ml - {green_ml_mixed}, "
-            sql += f"num_blue_ml = num_blue_ml - {blue_ml_mixed}, num_dark_ml = num_dark_ml - {dark_ml_mixed};"
-            connection.execute(sqlalchemy.text(sql))
-            # Update total potions count in global inventory
-            sql = f"SELECT * FROM potions; "
-            result = connection.execute(sqlalchemy.text(sql))
-            total = 0
-            for record in result:
-                total += record.quantity
-            sql = f"UPDATE global_inventory SET num_potions = {total}; "
+                sql += ("INSERT INTO potion_quantities (potion_id, delta) "
+                        "VALUES ("
+                            "( "
+                                "SELECT id FROM potions WHERE "
+                                f"red = {potion.potion_type[Color.RED]} AND "
+                                f"green = {potion.potion_type[Color.GREEN]} AND "
+                                f"blue = {potion.potion_type[Color.BLUE]} AND "
+                                f"dark = {potion.potion_type[Color.DARK]}"
+                            "), "
+                            f"{num_potions}"
+                        "); ")
+            sql += ("INSERT INTO global_inventory "
+                    "(gold, num_red_ml, num_green_ml, num_blue_ml, num_dark_ml)"
+                    f" VALUES (0, - {red_ml_mixed}, - {green_ml_mixed}, "
+                    f"- {blue_ml_mixed}, - {dark_ml_mixed}); ")
             connection.execute(sqlalchemy.text(sql))
             return "OK"
     else:
         return "Nothing Delivered"
+    
+def make_bottle_plan(inv, potions):
+    bottle_plan = []
+    inv_red = inv.num_red_ml
+    inv_green = inv.num_green_ml
+    inv_blue = inv.num_blue_ml
+    inv_dark = inv.num_dark_ml
+    for name, quantity, red, green, blue, dark in potions:
+        if quantity < BOTTLE_THRESHOLD:
+            if red > 0:
+                red_ok = (inv_red // red)
+            else:
+                red_ok = MAX_BOTTLE_NUM
+            if green > 0:
+                green_ok = (inv_green // green)
+            else:
+                green_ok = MAX_BOTTLE_NUM
+            if blue > 0:
+                blue_ok = (inv_blue // blue)
+            else:
+                blue_ok = MAX_BOTTLE_NUM
+            if dark > 0:
+                dark_ok = (inv_dark // dark)
+            else:
+                dark_ok = MAX_BOTTLE_NUM
+            # How many potions can be mixed
+            num_potions = min(red_ok, green_ok, blue_ok, dark_ok)
+            if num_potions > 0:
+                # bottle as much as possible up to threshold
+                num_potions = min(num_potions, max(0, BOTTLE_THRESHOLD - quantity))
+                if num_potions > 0:
+                    print(f"Plan to bottle {num_potions} {name} potions")
+                    inv_red -= (red * num_potions)
+                    inv_green -= (green * num_potions)
+                    inv_blue -= (blue * num_potions)
+                    inv_dark -= (dark * num_potions)
+                    bottle_plan.append({
+                        "potion_type": [red, green, blue, dark],
+                        "quantity": num_potions,
+                    })
+                else: # If inventory alread has more than threshold
+                    print(f"No need to bottle {name} with {quantity} in stock")
+            else:
+                print(f"Not enough ml to bottle {name}")
+    return bottle_plan
 
 # Gets called 4 times a day
 @router.post("/plan")
@@ -79,54 +125,26 @@ def get_bottle_plan():
 
     # Initial logic: bottle all barrels into potions.
     print("----Bottler Plan----")
-    with db.engine.begin() as connection:
-        sql = "SELECT * FROM global_inventory"
-        result = connection.execute(sqlalchemy.text(sql))
-        inv = result.first() # inventory is on a single row
-        sql = "SELECT * FROM potions ORDER BY quantity, id"
-        result = connection.execute(sqlalchemy.text(sql))
-        bottle_plan = []
-        inv_red = inv.num_red_ml
-        inv_green = inv.num_green_ml
-        inv_blue = inv.num_blue_ml
-        inv_dark = inv.num_dark_ml
-        for potion in result:
-            if potion.quantity < BOTTLE_THRESHOLD:
-                if potion.red > 0:
-                    red_ok = (inv_red // potion.red)
-                else:
-                    red_ok = MAX_BOTTLE_NUM
-                if potion.green > 0:
-                    green_ok = (inv_green // potion.green)
-                else:
-                    green_ok = MAX_BOTTLE_NUM
-                if potion.blue > 0:
-                    blue_ok = (inv_blue // potion.blue)
-                else:
-                    blue_ok = MAX_BOTTLE_NUM
-                if potion.dark > 0:
-                    dark_ok = (inv_dark // potion.dark)
-                else:
-                    dark_ok = MAX_BOTTLE_NUM
-                # How many potions can be mixed
-                num_potions = min(red_ok, green_ok, blue_ok, dark_ok)
-                if num_potions > 0:
-                    # bottle as much as possible up to threshold
-                    num_potions = min(num_potions, max(0, BOTTLE_THRESHOLD - potion.quantity))
-                    if num_potions > 0:
-                        print(f"Plan to bottle {num_potions} {potion.name} potions")
-                        inv_red -= (potion.red * num_potions)
-                        inv_green -= (potion.green * num_potions)
-                        inv_blue -= (potion.blue * num_potions)
-                        inv_dark -= (potion.dark * num_potions)
-                        bottle_plan.append({
-                            "potion_type": [potion.red, potion.green, potion.blue, potion.dark],
-                            "quantity": num_potions,
-                        })
-                    else: # If inventory alread has more than threshold
-                        print(f"No need to bottle {potion.name} with {potion.quantity} in stock")
-                else:
-                    print(f"Not enough ml to bottle {potion.name}")
-        return bottle_plan
+    try:
+        with db.engine.begin() as connection:
+            sql = ("SELECT SUM(gold) AS gold, SUM(pot_qty.delta) AS num_potions, "
+                "SUM(num_red_ml) AS num_red_ml, SUM(num_green_ml) AS num_green_ml, "
+                "SUM(num_blue_ml) AS num_blue_ml, SUM(num_dark_ml) AS num_dark_ml "
+                "FROM global_inventory, potion_quantities AS pot_qty")
+            result = connection.execute(sqlalchemy.text(sql))
+            inv = result.first() # inventory is on a single row
+            # Order potions by quantity (include name, quantity and ml mix info)
+            sql = ("SELECT potions.name, "
+                        "potions.red, potions.green, potions.blue, potions.dark, "
+                        "COALESCE(SUM(potion_quantities.delta), 0) AS quantity"
+                    "FROM potions "
+                    "LEFT JOIN potion_quantities ON "
+                        "potions.id = potion_quantities.potion_id "
+                    "GROUP BY potions.id "
+                    "ORDER BY quantity, potions.id; ")
+            potions = connection.execute(sqlalchemy.text(sql))
+            return make_bottle_plan(inv, potions)
+    except DBAPIError as error:
+        print(f"Error returned: <<<{error}>>>")
 
 

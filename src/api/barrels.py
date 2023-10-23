@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from src.api import auth
 import sqlalchemy
+from sqlalchemy.exc import DBAPIError
 from src import database as db
 from src.api.bottler import Color
 import copy
@@ -36,21 +37,18 @@ def list_viable(gold: int, catalog: list[Barrel]):
               viable_options.append(barrel)
     return viable_options
 
-def list_priority():
+def list_priority(potions):
     """ Returns the order in which purchasing berrels should be prioritized 
     based on how much of each type of potion are in the inventory """
-    with db.engine.begin() as connection:
-        priority_list = []
-        sql = "SELECT * FROM potions ORDER BY quantity, id"
-        result = connection.execute(sqlalchemy.text(sql))
-        for record in result:
-            potion_type = [record.red, record.green, record.blue, record.dark]
-            potion_color = potion_type.index(max(potion_type))
-            if potion_color not in priority_list:
-                priority_list.append(potion_color)
-            if len(priority_list) == NUM_COLORS:
-                break
-        return priority_list
+    priority_list = []
+    for red, green, blue, dark in potions:
+        potion_type = [red, green, blue, dark]
+        potion_color = potion_type.index(max(potion_type))
+        if potion_color not in priority_list:
+            priority_list.append(potion_color)
+        if len(priority_list) == NUM_COLORS:
+            break
+    return priority_list
     # return [Color.RED, Color.GREEN, Color.BLUE, Color.DARK] # Default priority
 
 def look_for(color: str, options: list[Barrel]):
@@ -103,15 +101,128 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
                     dark_ml_received += barrel.ml_per_barrel * barrel.quantity
             gold_spent += barrel.price * barrel.quantity
         with db.engine.begin() as connection:
-            sql = f"UPDATE global_inventory SET gold = gold - {gold_spent},"
-            sql += f" num_red_ml = num_red_ml + {red_ml_received},"
-            sql += f" num_green_ml = num_green_ml + {green_ml_received},"
-            sql += f" num_blue_ml = num_blue_ml + {blue_ml_received},"
-            sql += f" num_dark_ml = num_dark_ml + {dark_ml_received};"
+            sql = ("INSERT INTO global_inventory "
+                    "(gold, num_red_ml, num_green_ml, num_blue_ml, num_dark_ml)"
+                    f" VALUES (- {gold_spent}, "
+                    f"{red_ml_received}, {green_ml_received}, "
+                    f"{blue_ml_received}, {dark_ml_received}); ")
             connection.execute(sqlalchemy.text(sql))
         return "OK"
     else:
         return "Nothing Delivered"
+    
+def make_barrel_plan(wholesale_catalog, inv, potions, num_potions):
+    if num_potions < PURCHASE_THRESHOLD:
+        barrel_plan = []
+        gold = inv.gold
+        print(f"Available Gold: {gold}")
+        options = copy.deepcopy(wholesale_catalog)
+        options = list_viable(gold, options) # check afford and quantity in catalog
+        if len(options) > 0:
+            priority = list_priority(potions)
+            print(f"Priority list: {priority}")
+            print(f"Red = {Color.RED}, Green = {Color.GREEN}, Blue = {Color.BLUE}, Dark = {Color.DARK}")
+            if inv.num_red_ml > ML_THRESHOLD:
+                priority = [color for color in priority if color != Color.RED]
+                options = remove_all("RED", options)
+                print(f"Alread have enough red ml: {inv.num_red_ml}")
+            if inv.num_green_ml > ML_THRESHOLD:
+                priority = [color for color in priority if color != Color.GREEN]
+                options = remove_all("GREEN", options)
+                print(f"Alread have enough green ml: {inv.num_green_ml}")
+            if inv.num_blue_ml > ML_THRESHOLD:
+                priority = [color for color in priority if color != Color.BLUE]
+                options = remove_all("BLUE", options)
+                print(f"Alread have enough blue ml: {inv.num_blue_ml}")
+            if inv.num_dark_ml > ML_THRESHOLD:
+                priority = [color for color in priority if color != Color.DARK]
+                options = remove_all("DARK", options)
+                print(f"Alread have enough dark ml: {inv.num_dark_ml}")
+            if len(priority) > 0:
+                print(f"Updated Priority list: {priority}")
+                i = 0
+                barrel = None
+                red_cnt = 0
+                green_cnt = 0
+                blue_cnt = 0
+                dark_cnt = 0
+                while (len(options) > 0):
+                    print(f"Remaining number of options: {len(options)}")
+                    curr_color = priority[i]
+                    print(f"Priority {i}, value {Color(curr_color).name}")
+                    match curr_color:
+                        case Color.RED:
+                            if red_cnt < PURCHASE_MAX:
+                                barrel = look_for("RED", options)
+                                print(f"Checked options for Red: {barrel}")
+                                red_cnt += 1
+                            else:
+                                barrel = None
+                                options = remove_all("RED", options)
+                                print(f"Getting Sufficient number of red barrels: {red_cnt}")
+                        case Color.GREEN:
+                            if green_cnt < PURCHASE_MAX:
+                                barrel = look_for("GREEN", options)
+                                print(f"Checked options for Green: {barrel}")
+                                green_cnt += 1
+                            else:
+                                barrel = None
+                                options = remove_all("GREEN", options)
+                                print(f"Getting Sufficient number of green barrels: {green_cnt}")
+                        case Color.BLUE:
+                            if blue_cnt < PURCHASE_MAX:
+                                barrel = look_for("BLUE", options)
+                                print(f"Checked options for Blue: {barrel}")
+                                blue_cnt += 1
+                            else:
+                                barrel = None
+                                options = remove_all("BLUE", options)
+                                print(f"Getting Sufficient number of blue barrels: {blue_cnt}")
+                        case Color.DARK:
+                            if dark_cnt < PURCHASE_MAX:
+                                barrel = look_for("DARK", options)
+                                print(f"Checked options for Dark: {barrel}")
+                                dark_cnt += 1
+                            else:
+                                barrel = None
+                                options = remove_all("DARK", options)
+                                print(f"Getting Sufficient number of dark barrels: {dark_cnt}")
+                        case Color.BLANK:
+                            barrel = None
+                    i += 1 # Increment through priority list
+                    if i == len(priority): # Check if need to cycle through again
+                        i = 0
+                    if barrel is None: # if there are no options for that color
+                        priority = [color for color in priority if color != curr_color] # remove from priority list
+                        i = max(0, i - 1) # move i to accomodate removing from priority list
+                        print(f"Removed {Color(curr_color).name} from priority, no options found")
+                        continue
+                    gold -= barrel.price
+                    # Check if there is a Barrel with the same SKU already in barrel_plan
+                    index = next((index for index, item in enumerate(barrel_plan) if item.sku == barrel.sku), None)
+                    if index is not None:
+                        print("Barrel already in plan")
+                        wholesale_barrel = next((bar for bar in wholesale_catalog if bar.sku == barrel.sku), None)
+                        if wholesale_barrel.quantity == barrel_plan[index].quantity: # If already asking for max offered
+                            print(f"Already asking for all available {barrel.sku}, looking for other options")
+                            options = [bar for bar in options if bar.sku != wholesale_barrel.sku] # Remove barrel from options
+                        else: # If there is still stock available
+                            print(f"Adding another {barrel.sku} to plan")
+                            barrel_plan[index].quantity += 1 # add another barrel to plan
+                    else:
+                        print(f"Barrel added to plan: {barrel.sku}")
+                        barrel.quantity = 1 # Only choose to get 1 per iteration
+                        barrel_plan.append(barrel)
+                    print(f"Remaining Gold: {gold}")
+                    options = list_viable(gold, options) # check what options remain with current gold
+            else:
+                print(f"Current inventory sufficient, all ml types above {ML_THRESHOLD}")
+            return ({ "sku": bar.sku, "quantity": bar.quantity, } for bar in barrel_plan)
+        else:
+            print("Could not afford any barrels or none available")
+    else:
+        print(f"Current inventory sufficient -> {inv.num_potions} potions")
+    return []
 
 # Gets called once a day
 @router.post("/plan")
@@ -121,120 +232,27 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     print("Wholesale Catalog: ")
     print(wholesale_catalog)
 
-    with db.engine.begin() as connection:
-        sql = "SELECT * FROM global_inventory"
-        result = connection.execute(sqlalchemy.text(sql))
-        inv = result.first() # inventory is on a single row
-        if inv.num_potions < PURCHASE_THRESHOLD:
-            barrel_plan = []
-            gold = inv.gold
-            print(f"Available Gold: {gold}")
-            options = copy.deepcopy(wholesale_catalog)
-            options = list_viable(gold, options) # check afford and quantity in catalog
-            if len(options) > 0:
-                priority = list_priority()
-                print(f"Priority list: {priority}")
-                print(f"Red = {Color.RED}, Green = {Color.GREEN}, Blue = {Color.BLUE}, Dark = {Color.DARK}")
-                if inv.num_red_ml > ML_THRESHOLD:
-                    priority = [color for color in priority if color != Color.RED]
-                    options = remove_all("RED", options)
-                    print(f"Alread have enough red ml: {inv.num_red_ml}")
-                if inv.num_green_ml > ML_THRESHOLD:
-                    priority = [color for color in priority if color != Color.GREEN]
-                    options = remove_all("GREEN", options)
-                    print(f"Alread have enough green ml: {inv.num_green_ml}")
-                if inv.num_blue_ml > ML_THRESHOLD:
-                    priority = [color for color in priority if color != Color.BLUE]
-                    options = remove_all("BLUE", options)
-                    print(f"Alread have enough blue ml: {inv.num_blue_ml}")
-                if inv.num_dark_ml > ML_THRESHOLD:
-                    priority = [color for color in priority if color != Color.DARK]
-                    options = remove_all("DARK", options)
-                    print(f"Alread have enough dark ml: {inv.num_dark_ml}")
-                if len(priority) > 0:
-                    print(f"Updated Priority list: {priority}")
-                    i = 0
-                    barrel = None
-                    red_cnt = 0
-                    green_cnt = 0
-                    blue_cnt = 0
-                    dark_cnt = 0
-                    while (len(options) > 0):
-                        print(f"Remaining number of options: {len(options)}")
-                        curr_color = priority[i]
-                        print(f"Priority {i}, value {Color(curr_color).name}")
-                        match curr_color:
-                            case Color.RED:
-                                if red_cnt < PURCHASE_MAX:
-                                    barrel = look_for("RED", options)
-                                    print(f"Checked options for Red: {barrel}")
-                                    red_cnt += 1
-                                else:
-                                    barrel = None
-                                    options = remove_all("RED", options)
-                                    print(f"Getting Sufficient number of red barrels: {PURCHASE_MAX}")
-                            case Color.GREEN:
-                                if green_cnt < PURCHASE_MAX:
-                                    barrel = look_for("GREEN", options)
-                                    print(f"Checked options for Green: {barrel}")
-                                    green_cnt += 1
-                                else:
-                                    barrel = None
-                                    options = remove_all("GREEN", options)
-                                    print(f"Getting Sufficient number of green barrels: {PURCHASE_MAX}")
-                            case Color.BLUE:
-                                if blue_cnt < PURCHASE_MAX:
-                                    barrel = look_for("BLUE", options)
-                                    print(f"Checked options for Blue: {barrel}")
-                                    blue_cnt += 1
-                                else:
-                                    barrel = None
-                                    options = remove_all("BLUE", options)
-                                    print(f"Getting Sufficient number of blue barrels: {PURCHASE_MAX}")
-                            case Color.DARK:
-                                if dark_cnt < PURCHASE_MAX:
-                                    barrel = look_for("DARK", options)
-                                    print(f"Checked options for Dark: {barrel}")
-                                    dark_cnt += 1
-                                else:
-                                    barrel = None
-                                    options = remove_all("DARK", options)
-                                    print(f"Getting Sufficient number of dark barrels: {PURCHASE_MAX}")
-                            case Color.BLANK:
-                                barrel = None
-                        i += 1 # Increment through priority list
-                        if i == len(priority): # Check if need to cycle through again
-                            i = 0
-                        if barrel is None: # if there are no options for that color
-                            priority = [color for color in priority if color != curr_color] # remove from priority list
-                            i = max(0, i - 1) # move i to accomodate removing from priority list
-                            print(f"Removed {Color(curr_color).name} from priority, no options found")
-                            continue
-                        gold -= barrel.price
-                        # Check if there is a Barrel with the same SKU already in barrel_plan
-                        index = next((index for index, item in enumerate(barrel_plan) if item.sku == barrel.sku), None)
-                        if index is not None:
-                            print("Barrel already in plan")
-                            wholesale_barrel = next((bar for bar in wholesale_catalog if bar.sku == barrel.sku), None)
-                            if wholesale_barrel.quantity == barrel_plan[index].quantity: # If already asking for max offered
-                                print(f"Already asking for all available {barrel.sku}, looking for other options")
-                                options = [bar for bar in options if bar.sku != wholesale_barrel.sku] # Remove barrel from options
-                            else: # If there is still stock available
-                                print(f"Adding another {barrel.sku} to plan")
-                                barrel_plan[index].quantity += 1 # add another barrel to plan
-                        else:
-                            print(f"Barrel added to plan: {barrel.sku}")
-                            barrel.quantity = 1 # Only choose to get 1 per iteration
-                            barrel_plan.append(barrel)
-                        print(f"Remaining Gold: {gold}")
-                        options = list_viable(gold, options) # check what options remain with current gold
-                else:
-                    print(f"Current inventory sufficient, all ml types above {ML_THRESHOLD}")
-                return ({ "sku": bar.sku, "quantity": bar.quantity, } for bar in barrel_plan)
-            else:
-                print("Could not afford any barrels or none available")
-        else:
-            print(f"Current inventory sufficient -> {inv.num_potions} potions")
-        return []
-
+    try:
+        with db.engine.begin() as connection:
+            sql = ("SELECT SUM(gold) AS gold, SUM(pot_qty.delta) AS num_potions, "
+            "SUM(num_red_ml) AS num_red_ml, SUM(num_green_ml) AS num_green_ml, "
+            "SUM(num_blue_ml) AS num_blue_ml, SUM(num_dark_ml) AS num_dark_ml "
+            "FROM global_inventory, potion_quantities AS pot_qty")
+            result = connection.execute(sqlalchemy.text(sql))
+            inv = result.first() # inventory is summed to a single row
+            # Order potions by quantity to prioritize ml for lower inventory
+            sql = ("SELECT potions.name, "
+                        "potions.red, potions.green, potions.blue, potions.dark, "
+                        "COALESCE(SUM(potion_quantities.delta), 0) AS quantity"
+                    "FROM potions "
+                    "LEFT JOIN potion_quantities ON "
+                        "potions.id = potion_quantities.potion_id "
+                    "GROUP BY potions.id "
+                    "ORDER BY quantity, potions.id; ")
+            potions = connection.execute(sqlalchemy.text(sql))
+            sql = ("SELECT SUM(delta) FROM potion_quantities")
+            num_potions = connection.execute(sqlalchemy.text(sql)).scalar_one()
+            return make_barrel_plan(wholesale_catalog, inv, potions, num_potions)
+    except DBAPIError as error:
+        print(f"Error returned: <<<{error}>>>")
 

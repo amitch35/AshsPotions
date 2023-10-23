@@ -18,10 +18,10 @@ def reset():
     """
     print("----Reset----")
     with db.engine.begin() as connection:
-            sql = f"UPDATE global_inventory SET gold = 100, num_potions = 0, num_red_ml = 0, "
-            sql += f"num_green_ml = 0, num_blue_ml = 0, num_dark_ml = 0; "
-            sql += f"UPDATE potions SET quantity = 0; "
-            sql += f"DELETE FROM shopping_carts; "
+            sql = f"TRUNCATE global_inventory; "
+            sql += f"INSERT INTO global_inventory DEFAULT VALUES; "
+            sql += f"TRUNCATE potion_quantities; "
+            sql += f"TRUNCATE shopping_carts CASCADE; "
             connection.execute(sqlalchemy.text(sql))
     return "OK"
 
