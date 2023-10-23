@@ -123,7 +123,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 print(f"Cart {cart_id}: {cart}")
                 if cart: # if there exists a cart with the given id
                     sql = (f"SELECT * FROM cart_contents AS cnt "
-                            f"JOIN potions AS pot ON cnt.potion_sku = pot.sku "
+                            f"JOIN potions AS pot ON cnt.potion_id = pot.id "
                             f"WHERE cart_id = {cart_id}; ")
                     result = connection.execute(sqlalchemy.text(sql))
                     cart_content = result.first()
