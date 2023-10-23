@@ -122,7 +122,10 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 cart = result.first()
                 print(f"Cart {cart_id}: {cart}")
                 if cart: # if there exists a cart with the given id
-                    sql = (f"SELECT * FROM cart_contents AS cnt "
+                    sql = (f"SELECT *, "
+                           "(SELECT sum(delta) FROM potion_quantities "
+                           "WHERE potion_id = cnt.potion_id) AS quantity "
+                           "FROM cart_contents AS cnt "
                             f"JOIN potions AS pot ON cnt.potion_id = pot.id "
                             f"WHERE cart_id = {cart_id}; ")
                     result = connection.execute(sqlalchemy.text(sql))
