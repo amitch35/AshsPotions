@@ -91,7 +91,7 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
                                     f"{cart_id}, "
                                     f"{cart_item.quantity}, "
                                     f"(SELECT id FROM potions WHERE sku = '{item_sku}'"
-                                "); ")
+                                ")); ")
                     connection.execute(sqlalchemy.text(sql))
                     return {"success": True}
                 else:
