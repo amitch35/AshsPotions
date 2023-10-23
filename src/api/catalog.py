@@ -20,8 +20,8 @@ def get_catalog():
                     "FROM potions "
                     "JOIN potion_quantities ON "
                         "potions.id = potion_quantities.potion_id "
-                    "WHERE quantity > 0 "
                     "GROUP BY potions.id "
+                    "HAVING coalesce(sum(potion_quantities.delta), 0) > 0 "
                     "ORDER BY RANDOM() "
                     f"LIMIT {CATALOG_MAX}")
         result = connection.execute(sqlalchemy.text(sql))
