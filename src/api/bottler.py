@@ -109,6 +109,8 @@ def make_bottle_plan(inv, potions):
                     print(f"No need to bottle {name} with {quantity} in stock")
             else:
                 print(f"Not enough ml to bottle {name}")
+        else:
+                print(f"Already have {quantity} of {name}")
     return bottle_plan
 
 # Gets called 4 times a day
