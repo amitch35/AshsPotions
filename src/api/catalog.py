@@ -15,6 +15,7 @@ def get_catalog():
     # Can return a max of 6 items.
     print("----Catalog----")
     with db.engine.begin() as connection:
+        # TODO: Implement best sellers/constants and time based offerings 
         sql = ("SELECT potions.*, "
                         "COALESCE(SUM(potion_quantities.delta), 0) AS quantity "
                     "FROM potions "
