@@ -75,7 +75,6 @@ Handles the checkout process for a specific cart.
 ```json
 {
   "payment": "string",
-  "gold_paid": "integer"
 }
 ```
 
@@ -83,7 +82,9 @@ Handles the checkout process for a specific cart.
 
 ```json
 {
-    "success": "boolean"
+    "success": "boolean",
+    "total_potions_bought": "integer",
+    "total_gold_paid": "integer"
 }
 ```
 
@@ -153,7 +154,7 @@ Gets the plan for purchasing wholesale barrels.
 [
     {
         "sku": "string", /* Must match a sku from the catalog just passed in this call */
-        "quantity": "integer" /* A number less than or equal to the quantity available for sale */
+        "quantity": "integer" /* A number between 1 and the quantity available for sale */
     }
 ]
 ```

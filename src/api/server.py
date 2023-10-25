@@ -5,6 +5,7 @@ from src.api import audit, carts, catalog, bottler, barrels, admin
 import json
 import logging
 import sys
+from starlette.middleware.cors import CORSMiddleware
 
 description = """
 Ash's Potions is a totally radical potion site where we forge all your alchemical concoctions.
@@ -19,6 +20,16 @@ app = FastAPI(
         "name": "Ash Mitchell",
         "email": "amitch35@calpoly.edu",
     },
+)
+
+origins = ["https://potion-exchange.vercel.app"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["GET", "OPTIONS"],
+    allow_headers=["*"],
 )
 
 app.include_router(audit.router)

@@ -14,7 +14,7 @@ There are three primary actions that may unfold during these ticks:
 
 2. **Potion Creation**: Every alternate tick presents an opportunity to brew new potions. Each potion requires 100 ml of either red, green, blue, or dark liquid. You must have sufficient volume of the chosen color in your barrelled inventory to brew a potion.
 
-3. **Barrel Purchasing**: On every 12th tick, you have an opportunity to purchase additional barrels of various colors. Your API receives a catalog of barrels available for sale and should respond with your purchase decisions. The gold cost of each barrel is deducted from your balance upon purchase.
+3. **Barrel Purchasing**: On every alternate tick, you have an opportunity to purchase additional barrels of various colors. Your API receives a catalog of barrels available for sale and should respond with your purchase decisions. The gold cost of each barrel is deducted from your balance upon purchase.
 
 Part of the challenge in these interactions is you are responsible for keeping track of your gold and your various inventory levels. The [Consortium of Concotions and Charms](https://potion-exchange.vercel.app/) separately keeps an authoritiative record (which can be viewed under Shop stats).
 
@@ -46,7 +46,7 @@ The first version of your improved store will simply keep track of how many red 
 1. Create an account on [Supabase](https://supabase.com/).
 2. We will start with the simplest possible schema: a single row in a single table. Create a new project in Supabase, select the 'Table Editor' on the left-hand navigation menu, and then click the "Create a new table" button. Create a table called `global_inventory`. This table should have columns named `num_red_potions` (int4), `num_red_ml` (int4), and `gold` (int4) to keep track of your current resources.
 3. Insert an initial row in your database and set `num_red_potions` to 0, `num_red_ml` to 0, and `gold` to 100.
-3. Add your database connection details to the environment variables in your Vercel project. Within your Supabase project settings, go to Database -> Connection String -> URI, copy the connection string, and replace `PASSWORD` with your database password. Back in Vercel, add this modified string as a new environment variable named `POSTGRES_URI`.
+3. Add your database connection details to the environment variables in your Render project. Within your Supabase project settings, go to Database -> Connection String -> URI, copy the connection string, and replace `PASSWORD` with your database password. Back in Vercel, add this modified string as a new environment variable named `POSTGRES_URI`.
 
 In your backend repository, establish a connection to your Supabase database using SQLAlchemy, drawing the `POSTGRES_URI` from environment variables. To do so, create a database.py file in your src folder with the following code:
 ```py
@@ -73,7 +73,7 @@ from src import database as db
 And execute SQL in each of your endpoints (barrels.py, bottler.py, carts.py, and catalog.py) as:
 ```py
 with db.engine.begin() as connection:
-        result = connection.execute(sql_to_execute)
+        result = connection.execute(sqlalchemy.text(sql_to_execute))
 ```
 
 You will need to use SELECT and UPDATE sql statements. In this version you won't need to do any INSERTs or DELETEs.
@@ -84,3 +84,89 @@ Once you've finished making your changes, go back to [Consortium of Concotions a
 
 With the release of this version, you should no longer encounter job errors resulting from attempting to buy barrels without sufficient gold, mix potions without the necessary ml of ingredients, or sell potions not currently in your inventory.
 
+## Version 2 - Selling more than red potions
+
+In this second version of your shop, you need to also make and sell blue and green potions. You will need to come up with your own logic for when to buy red, green, or blue barrels. Your logic does not have to be particularly clever, you just have to make sure at some point your shop is successfully selling red, green, and blue potions. The implementation details from there are completely up to you.
+
+## Version 3 - Custom Potion Types and Order Management
+
+In the third version of central coast cauldrons, your goal is to:
+* support customizable potion mixes and remove all hardcoding of the potions sold from your code. 
+* build out a proper order management system for our carts backed by our database.
+* Implement audit if you haven’t done so already.
+
+Additionally, please include the SQL used to create and initially populate your database in a file called schema.sql in the root of your github. I will be reviewing this to ensure your database tables are setup correctly.
+
+### Supporting custom potion types
+Thus far, you’ve been hardcoding the mixing of potions to pure Red, pure Green, and pure Blue potions. What we are going to do now is create a table in your database where every row indicates a unique potion mixture. Each row will have (at a minimum):
+* the type of potion (for example 50 red, 0 green, 50 blue, 0 dark to make a purple potion) that can be made
+* all relevant catalog information you will need to offer them for sale. 
+* the available inventory of that potion.
+
+Across your endpoints, you must no longer hardcode ANY reference to a particular potion type. The potions your shop makes should be entirely driven by your new table.
+
+To get full points, I need to see at least one purchase occur of a potion that isn't purely red, green, or blue.
+
+### Order management
+I encouraged many of you to just use an in-memory structure to handle management of your carts for versions 1 and 2 (for example, a global cart_id that you incremented, and a dictionary to hold cart items.). Now, I am requiring that carts be stored in the database. You should at a minimum have two tables to support your carts: a carts table to reflect a new cart created by a customer and a cart items table to represent a specific item being added to your cart. Foreign key references in the cart items table must be setup correctly (cart items should have at least two…).
+
+### Audit
+If you haven’t already, make sure the audit inventory endpoint correctly reflects your gold, number of potions, and number of mls.
+
+## Version 4 - Ledgers
+
+In the fourth version of central coast cauldrons, you will ledgerize your database. Rather than updating inventory values (gold, ml, and potion amounts) directly, you will instead just record changes to values. When calculating the amount of inventory you have, you will instead SUM up your ledger on-the-fly. By doing so, you gain several new advantages:
+* You can gain a history of changes made over time
+* You can see what your historical inventory levels were at any point in time
+* You can reconcile what events caused discrepencies in your inventory levels and undo those events independently of other events
+
+To gain full points on this version, you must convert gold, ml, and potion inventory tracking to a ledgerized design.
+
+### Example of a ledger design
+For a concrete example of how you would build a ledger, let's say I was building a database to record the movement of money between groups of people. I could decide I want to model out three entities:
+* accounts - An entity representing each person's account. This would include things like the account holder's name, etc.
+* account_transactions - An entity representing discrete transactions on people's accounts. This might be something such as Alice transfers Bob $50.
+* account_ledger_entries - An entity representing ledger entries aka modifications to people's account balances.
+
+For account_ledger_entries, we have these columns:
+* id - The primary key
+* account_id - A foreign key reference to the accounts table
+* account_transaction_id - A foreign key reference to the account_transactions table
+* change - An integer field that represents how much to increase or decrease the account value
+
+For account_transactions, we have these columns:
+* id - The primary key
+* created_at - When the transaction occurred auto-assigned by current timestamp
+* description - A description of the transaction 
+
+If I wanted to record the transaction between Alice and Bob, I would add one row to the account_transactions table:
+```SQL
+INSERT INTO account_transactions (description) VALUES ('Alice paying back Bob the $50 he lent her');
+```
+and two rows to the account_ledger_entries table:
+```SQL
+INSERT INTO account_ledger_entries (account_id, account_transaction_id, change)
+VALUES
+(:alice_account_id, :transaction_id, -50),
+(:bob_account_id, :transaction_id, 50);
+```
+
+If I wanted to then get Bob's current account balance, I could then run the following query:
+```SQL
+SELECT SUM(change) AS balance
+FROM account_ledger_entries
+WHERE account_id = :bob_account_id;
+```
+
+## Version 5 - Order Search
+
+This is the final version of your potion shop. You will now add search functionality to your backend that will power the search orders page on https://potion-exchange.vercel.app/.
+<img width="622" alt="image" src="https://github.com/jackalnom/centralcoastcauldrons/assets/26583819/9bd9cee7-973c-4cc5-9676-a0f874b6ce6d">
+
+In the latest pull of carts.py, it now contains a new search endpoint. Do not change the method signature of this endpoint, and ensure that the format of what you return matches the example JSON.
+
+Additionally, make sure you pull the latest server.py. It includes a CORS configuration that is necessary for the front-end to call your webservice.
+
+Once you've implemented the search endpoint, make sure you test your work using the search orders page mentioned above. Filtering, paging, and sorting must all work correctly to get full points on this assignment.
+
+As a reference, feel free to look at this lecture where I cover one way of implementing such a search functionality: https://observablehq.com/@calpoly-pierce/python-connectivity#cell-70.
