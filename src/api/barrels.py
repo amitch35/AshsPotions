@@ -212,8 +212,8 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions):
                             barrel_plan[index].quantity += 1 # add another barrel to plan
                     else:
                         print(f"Barrel added to plan: {barrel.sku}")
-                        barrel.quantity = 1 # Only choose to get 1 per iteration
-                        barrel_plan.append(barrel)
+                        # Only choose to get 1 per iteration
+                        barrel_plan.append(Barrel(barrel.ml_per_barrel, barrel.potion_type, barrel.price, 1))
                     print(f"Remaining Gold: {gold}")
                     options = list_viable(gold, options) # check what options remain with current gold
             else:
