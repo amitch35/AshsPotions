@@ -3,8 +3,12 @@ from pydantic import BaseModel
 from src.api import auth
 from enum import Enum
 import sqlalchemy
+from sqlalchemy import select, join
 from sqlalchemy.exc import DBAPIError
 from src import database as db
+import datetime
+
+SEARCH_PAGE_SIZE = 5
 
 REQUESTED_TOO_MANY_POTIONS = 2004
 
@@ -56,20 +60,118 @@ def search_orders(
     Your results must be paginated, the max results you can return at any
     time is 5 total line items.
     """
+    try:
+        with db.engine.begin() as connection:
+            line_item_id = search_page * SEARCH_PAGE_SIZE
 
-    return {
-        "previous": "",
-        "next": "",
-        "results": [
-            {
-                "line_item_id": 1,
-                "item_sku": "1 oblivion potion",
-                "customer_name": "Scaramouche",
-                "line_item_total": 50,
-                "timestamp": "2021-01-01T00:00:00Z",
+            # Use reflection to derive table schema. You can also code this in manually.
+            metadata_obj = sqlalchemy.MetaData()
+            shopping_carts = sqlalchemy.Table("shopping_carts", metadata_obj, autoload_with=connection)
+            cart_contents = sqlalchemy.Table("cart_contents", metadata_obj, autoload_with=connection)
+            transactions = sqlalchemy.Table("transactions", metadata_obj, autoload_with=connection)
+            potions = sqlalchemy.Table("potions", metadata_obj, autoload_with=connection)
+            
+            # determine sort column
+            match sort_col:
+                case search_sort_options.customer_name:
+                    order_by = db.cart_contents.c.title
+                case search_sort_options.item_sku:
+                    order_by = db.potions.c.sku
+                case search_sort_options.line_item_total:
+                    order_by = (cart_contents.c.quantity_requested * potions.c.price)
+                case search_sort_options.timestamp:
+                    order_by = db.transactions.c.created_at
+                case _ :
+                    assert False
+
+            # determine order
+            if sort_order is search_sort_order.desc:
+                order_by = sqlalchemy.desc(order_by)
+
+            # find limit and offset for page and page size
+            limit = SEARCH_PAGE_SIZE + 1
+            if search_page != "":
+                offset = SEARCH_PAGE_SIZE * int(search_page)
+            else:
+                offset = 0
+            
+            # build base select statement
+            stmt = (
+                select(
+                    cart_contents.c.id,
+                    cart_contents.c.quantity_requested,
+                    shopping_carts.c.customer,
+                    potions.c.sku,
+                    potions.c.price,
+                    transactions.c.created_at,
+                )
+                .select_from(
+                    join(
+                        cart_contents,
+                        shopping_carts,
+                        cart_contents.c.cart_id == shopping_carts.c.id,
+                    )
+                    .join(
+                        potions,
+                        cart_contents.c.potion_id == potions.c.id,
+                    )
+                    .join(
+                        transactions,
+                        cart_contents.c.cart_id == transactions.c.id,
+                    )
+                )
+                .limit(limit)
+                .offset(offset)
+                .order_by(order_by, sqlalchemy.desc(cart_contents.c.id))
+            )
+            
+            # filter names only if customer name parameter is passed
+            if customer_name != "":
+                stmt = stmt.where(shopping_carts.c.customer.ilike(f"%{customer_name}%"))
+            
+            # filter potions only if potion sku parameter is passed
+            if potion_sku != "":
+                stmt = stmt.where(potions.c.sku.ilike(f"%{potion_sku}%"))
+            
+            # execute search and build results
+            i = 0
+            result = connection.execute(stmt)
+            results_json = []
+            for row in result:
+                if i < SEARCH_PAGE_SIZE:
+                    results_json.append(
+                        {
+                            "line_item_id": row.id,
+                            "item_sku": f"{row.quantity_requested} {row.sku}(s)",
+                            "customer_name": f"{row.customer}",
+                            "line_item_total": (row.quantity_requested * row.price),
+                            "timestamp": row.created_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                        }
+                    )
+                i += 1
+            
+            if offset > 0:
+                # has previous page
+                prev = f"https://ashs-potions.onrender.com/carts/search/?customer_name={customer_name}&potion_sku={potion_sku}&search_page='{int(search_page) - 1}'&sort_col={sort_col}&sort_order={sort_order}"
+            else:
+                prev = ""
+
+            if i > SEARCH_PAGE_SIZE:
+                # has next page
+                nxt = f"https://ashs-potions.onrender.com/carts/search/?customer_name={customer_name}&potion_sku={potion_sku}&search_page='{int(search_page) + 1}'&sort_col={sort_col}&sort_order={sort_order}"
+            else:
+                nxt = ""
+
+            return {
+                "previous": prev,
+                "next": nxt,
+                "results": results_json
             }
-        ],
-    }
+
+    
+
+    except DBAPIError as error:
+        print(f"Error returned: <<<{error}>>>")
 
 
 class NewCart(BaseModel):
