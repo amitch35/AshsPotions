@@ -91,8 +91,10 @@ def search_orders(
             # find limit and offset for page and page size
             limit = SEARCH_PAGE_SIZE + 1
             if search_page != "":
-                offset = SEARCH_PAGE_SIZE * int(search_page)
+                page_num = int(search_page)
+                offset = SEARCH_PAGE_SIZE * page_num
             else:
+                page_num = 0
                 offset = 0
             
             # build base select statement
@@ -152,13 +154,13 @@ def search_orders(
             
             if offset > 0:
                 # has previous page
-                prev = f"https://ashs-potions.onrender.com/carts/search/?customer_name={customer_name}&potion_sku={potion_sku}&search_page='{int(search_page) - 1}'&sort_col={sort_col}&sort_order={sort_order}"
+                prev = f"https://ashs-potions.onrender.com/carts/search/?customer_name={customer_name}&potion_sku={potion_sku}&search_page='{page_num - 1}'&sort_col={sort_col}&sort_order={sort_order}"
             else:
                 prev = ""
 
             if i > SEARCH_PAGE_SIZE:
                 # has next page
-                nxt = f"https://ashs-potions.onrender.com/carts/search/?customer_name={customer_name}&potion_sku={potion_sku}&search_page='{int(search_page) + 1}'&sort_col={sort_col}&sort_order={sort_order}"
+                nxt = f"https://ashs-potions.onrender.com/carts/search/?customer_name={customer_name}&potion_sku={potion_sku}&search_page='{page_num + 1}'&sort_col={sort_col}&sort_order={sort_order}"
             else:
                 nxt = ""
 
