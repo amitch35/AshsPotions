@@ -119,7 +119,7 @@ def search_orders(
                     )
                     .join(
                         transactions,
-                        cart_contents.c.cart_id == transactions.c.id,
+                        cart_contents.c.cart_id == transactions.c.cart_id,
                     )
                 )
                 .limit(limit)
@@ -144,6 +144,9 @@ def search_orders(
                     item_string = f"{row.quantity_requested} {row.name} Potion"
                     if row.quantity_requested > 1:
                         item_string += "s"
+                    
+                    # Convert 'created_at' to a timezone-aware datetime object
+                    #created_at_datetime = row.created_at.astimezone(pytz.timezone('PST'))
                     results_json.append(
                         {
                             "line_item_id": row.id,
