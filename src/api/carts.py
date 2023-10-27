@@ -74,7 +74,7 @@ def search_orders(
             # determine sort column
             match sort_col:
                 case search_sort_options.customer_name:
-                    order_by = cart_contents.c.title
+                    order_by = shopping_carts.c.customer
                 case search_sort_options.item_sku:
                     order_by = potions.c.name
                 case search_sort_options.line_item_total:
