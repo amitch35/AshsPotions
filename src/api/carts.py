@@ -157,13 +157,13 @@ def search_orders(
             
             if offset > 0:
                 # has previous page
-                prev = f"customer_name={customer_name}&potion_sku={potion_sku}&search_page='{page_num - 1}'&sort_col={sort_col}&sort_order={sort_order}"
+                prev = f"{page_num - 1}"
             else:
                 prev = ""
 
             if i > SEARCH_PAGE_SIZE:
                 # has next page
-                nxt = f"customer_name={customer_name}&potion_sku={potion_sku}&search_page='{page_num + 1}'&sort_col={sort_col}&sort_order={sort_order}"
+                nxt = f"{page_num + 1}"
             else:
                 nxt = ""
 
