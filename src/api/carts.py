@@ -76,7 +76,7 @@ def search_orders(
                 case search_sort_options.customer_name:
                     order_by = cart_contents.c.title
                 case search_sort_options.item_sku:
-                    order_by = potions.c.sku
+                    order_by = potions.c.name
                 case search_sort_options.line_item_total:
                     order_by = (cart_contents.c.quantity_requested * potions.c.price)
                 case search_sort_options.timestamp:
@@ -103,7 +103,7 @@ def search_orders(
                     cart_contents.c.id,
                     cart_contents.c.quantity_requested,
                     shopping_carts.c.customer,
-                    potions.c.sku,
+                    potions.c.name,
                     potions.c.price,
                     transactions.c.created_at,
                 )
@@ -133,7 +133,7 @@ def search_orders(
             
             # filter potions only if potion sku parameter is passed
             if potion_sku != "":
-                stmt = stmt.where(potions.c.sku.ilike(f"%{potion_sku}%"))
+                stmt = stmt.where(potions.c.name.ilike(f"%{potion_sku}%"))
             
             # execute search and build results
             i = 0
@@ -141,10 +141,13 @@ def search_orders(
             results_json = []
             for row in result:
                 if i < SEARCH_PAGE_SIZE:
+                    item_string = f"{row.quantity_requested} {row.name} Potion"
+                    if row.quantity_requested > 1:
+                        item_string += "s"
                     results_json.append(
                         {
                             "line_item_id": row.id,
-                            "item_sku": f"{row.quantity_requested} {row.sku}(s)",
+                            "item_sku": item_string,
                             "customer_name": f"{row.customer}",
                             "line_item_total": (row.quantity_requested * row.price),
                             "timestamp": row.created_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
