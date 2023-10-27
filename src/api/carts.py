@@ -74,13 +74,13 @@ def search_orders(
             # determine sort column
             match sort_col:
                 case search_sort_options.customer_name:
-                    order_by = db.cart_contents.c.title
+                    order_by = cart_contents.c.title
                 case search_sort_options.item_sku:
-                    order_by = db.potions.c.sku
+                    order_by = potions.c.sku
                 case search_sort_options.line_item_total:
                     order_by = (cart_contents.c.quantity_requested * potions.c.price)
                 case search_sort_options.timestamp:
-                    order_by = db.transactions.c.created_at
+                    order_by = transactions.c.created_at
                 case _ :
                     assert False
 
