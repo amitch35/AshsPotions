@@ -154,13 +154,13 @@ def search_orders(
             
             if offset > 0:
                 # has previous page
-                prev = f"https://ashs-potions.onrender.com/carts/search/?customer_name={customer_name}&potion_sku={potion_sku}&search_page='{page_num - 1}'&sort_col={sort_col}&sort_order={sort_order}"
+                prev = f"customer_name={customer_name}&potion_sku={potion_sku}&search_page='{page_num - 1}'&sort_col={sort_col}&sort_order={sort_order}"
             else:
                 prev = ""
 
             if i > SEARCH_PAGE_SIZE:
                 # has next page
-                nxt = f"https://ashs-potions.onrender.com/carts/search/?customer_name={customer_name}&potion_sku={potion_sku}&search_page='{page_num + 1}'&sort_col={sort_col}&sort_order={sort_order}"
+                nxt = f"customer_name={customer_name}&potion_sku={potion_sku}&search_page='{page_num + 1}'&sort_col={sort_col}&sort_order={sort_order}"
             else:
                 nxt = ""
 
