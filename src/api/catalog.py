@@ -28,6 +28,7 @@ def get_catalog():
         result = connection.execute(sqlalchemy.text(sql))
         catalog = []
         for potion in result:
+            print(f"{potion.name}: {potion.quantity}")
             catalog.append({
                         "sku": potion.sku,
                         "name": potion.name,
@@ -35,5 +36,4 @@ def get_catalog():
                         "price": potion.price,
                         "potion_type": [potion.red, potion.green, potion.blue, potion.dark],
                     })
-        print(catalog)
         return catalog
