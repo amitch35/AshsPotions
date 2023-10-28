@@ -6,6 +6,7 @@ import sqlalchemy
 from sqlalchemy import select, join
 from sqlalchemy.exc import DBAPIError
 from src import database as db
+import pytz
 import datetime
 
 SEARCH_PAGE_SIZE = 5
@@ -141,19 +142,18 @@ def search_orders(
             results_json = []
             for row in result:
                 if i < SEARCH_PAGE_SIZE:
-                    item_string = f"{row.quantity_requested} {row.name} Potion"
-                    if row.quantity_requested > 1:
-                        item_string += "s"
-                    
+                    item_string = make_look_nice(row.quantity_requested, row.name)
                     # Convert 'created_at' to a timezone-aware datetime object
-                    #created_at_datetime = row.created_at.astimezone(pytz.timezone('PST'))
+                    created_at_datetime = row.created_at.astimezone(pytz.timezone('PST'))
+                    # Convert to the desired string format for UTC
+                    formatted_datetime = created_at_datetime.strftime('%Y-%m-%dT%H:%M:%SZ')
                     results_json.append(
                         {
                             "line_item_id": row.id,
                             "item_sku": item_string,
                             "customer_name": f"{row.customer}",
                             "line_item_total": (row.quantity_requested * row.price),
-                            "timestamp": row.created_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                            "timestamp": formatted_datetime,
                         }
                     )
                 i += 1
@@ -175,11 +175,14 @@ def search_orders(
                 "next": nxt,
                 "results": results_json
             }
-
-    
-
     except DBAPIError as error:
         print(f"Error returned: <<<{error}>>>")
+
+def make_look_nice(qty, name):
+    item_details_string = f"{qty} {name} Potion"
+    if qty > 1:
+        item_string += "s"
+    return item_details_string
 
 
 class NewCart(BaseModel):
