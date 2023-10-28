@@ -181,7 +181,7 @@ def search_orders(
 def make_look_nice(qty, name):
     item_details_string = f"{qty} {name} Potion"
     if qty > 1:
-        item_string += "s"
+        item_details_string += "s"
     return item_details_string
 
 
