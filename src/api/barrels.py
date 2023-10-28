@@ -9,7 +9,7 @@ import copy
 
 PURCHASE_THRESHOLD = 280
 PURCHASE_MAX = 10
-BLACK_PURCHASE_MAX = 30
+DARK_PURCHASE_MAX = 30
 ML_THRESHOLD = 10000
 NUM_COLORS = 4
 
@@ -180,7 +180,7 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions):
                                 options = remove_all("BLUE", options)
                                 print(f"Getting Sufficient number of blue barrels: {blue_cnt}")
                         case Color.DARK:
-                            if dark_cnt < BLACK_PURCHASE_MAX:
+                            if dark_cnt < DARK_PURCHASE_MAX:
                                 barrel = look_for("DARK", options)
                                 print(f"Checked options for Dark: {barrel}")
                                 dark_cnt += 1
