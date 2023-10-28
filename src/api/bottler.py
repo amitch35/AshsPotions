@@ -13,7 +13,7 @@ class Color(IntEnum):
     DARK = 3
     BLANK = 4
 
-BOTTLE_THRESHOLD = 20
+BOTTLE_THRESHOLD = 30
 MAX_BOTTLE_NUM = 99999
 
 router = APIRouter(
@@ -76,6 +76,7 @@ def make_bottle_plan(inv, potions):
     inv_green = inv.num_green_ml
     inv_blue = inv.num_blue_ml
     inv_dark = inv.num_dark_ml
+    # TODO: make it so never goes above 300 using inv.num_potions
     for name, red, green, blue, dark, quantity in potions:
         if quantity < BOTTLE_THRESHOLD:
             if red > 0:
