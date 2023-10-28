@@ -6,7 +6,6 @@ import sqlalchemy
 from sqlalchemy import select, join
 from sqlalchemy.exc import DBAPIError
 from src import database as db
-import pytz
 import datetime
 
 SEARCH_PAGE_SIZE = 5
@@ -143,17 +142,13 @@ def search_orders(
             for row in result:
                 if i < SEARCH_PAGE_SIZE:
                     item_string = make_look_nice(row.quantity_requested, row.name)
-                    # Convert 'created_at' to a timezone-aware datetime object
-                    created_at_datetime = row.created_at.astimezone(pytz.timezone('PST'))
-                    # Convert to the desired string format for UTC
-                    formatted_datetime = created_at_datetime.strftime('%Y-%m-%dT%H:%M:%SZ')
                     results_json.append(
                         {
                             "line_item_id": row.id,
                             "item_sku": item_string,
                             "customer_name": f"{row.customer}",
                             "line_item_total": (row.quantity_requested * row.price),
-                            "timestamp": formatted_datetime,
+                            "timestamp": row.created_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                         }
                     )
                 i += 1
