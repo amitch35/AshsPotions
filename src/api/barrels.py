@@ -5,6 +5,7 @@ import sqlalchemy
 from sqlalchemy.exc import DBAPIError
 from src import database as db
 from src.api.bottler import Color
+from src.api.catalog import SHOP_PHASE, PHASE_ONE, PHASE_TWO
 import copy
 
 PURCHASE_THRESHOLD = 280

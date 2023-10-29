@@ -1,8 +1,13 @@
 from fastapi import APIRouter
 import sqlalchemy
 from src import database as db
+from src.api.bottler import MAX_BOTTLE_NUM
 
 router = APIRouter()
+
+PHASE_ONE = 1 # Getting started, growth and aquiring customers
+PHASE_TWO = 2 # Optimizing Purchases and offerings
+SHOP_PHASE = PHASE_ONE
 
 CATALOG_MAX = 6
 
@@ -32,7 +37,7 @@ def get_catalog():
             catalog.append({
                         "sku": potion.sku,
                         "name": potion.name,
-                        "quantity": potion.quantity,
+                        "quantity": MAX_BOTTLE_NUM,
                         "price": potion.price,
                         "potion_type": [potion.red, potion.green, potion.blue, potion.dark],
                     })
