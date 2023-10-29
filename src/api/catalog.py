@@ -86,7 +86,7 @@ def get_catalog():
         # Implements best sellers and time based offerings before randomly offering others
         catalog = []
         catalog_size = 0
-        day_of_week = conn.execute(select([func.extract('dow', func.now()).label("day_of_week")])).scalar()
+        day_of_week = conn.execute(select(func.extract('dow', func.now()).label("day_of_week"))).scalar()
         stmt = (
             select(
                 [potions, func.coalesce(func.sum(potion_quantities.c.delta), 0).label("quantity")]
