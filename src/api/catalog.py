@@ -82,71 +82,74 @@ def get_catalog():
 
     # Can return a max of 6 items.
     print("----Catalog----")
-    with db.engine.begin() as conn:
-        # Implements best sellers and time based offerings before randomly offering others
-        catalog = []
-        catalog_size = 0
-        sql = ("SELECT EXTRACT( DOW FROM current_date) AS day_of_week;")
-        day_of_week = int(conn.execute(sqlalchemy.text(sql)).scalar_one())
-        stmt = (
-            select(
-                [potions, func.coalesce(func.sum(potion_quantities.c.delta), 0).label("quantity")]
+    try:
+        with db.engine.begin() as conn:
+            # Implements best sellers and time based offerings before randomly offering others
+            catalog = []
+            catalog_size = 0
+            sql = ("SELECT EXTRACT(DOW FROM current_date) FROM current_date AS day_of_week;")
+            day_of_week = int(conn.execute(sqlalchemy.text(sql)).scalar_one())
+            stmt = (
+                select(
+                    [potions, func.coalesce(func.sum(potion_quantities.c.delta), 0).label("quantity")]
+                )
+                .select_from(
+                    potions.join(potion_quantities, potions.c.id == potion_quantities.c.potion_id)
+                )
+                .group_by(
+                    potions.c.id
+                )
+                .having(
+                    func.coalesce(func.sum(potion_quantities.c.delta), 0) > 0
+                )
             )
-            .select_from(
-                potions.join(potion_quantities, potions.c.id == potion_quantities.c.potion_id)
-            )
-            .group_by(
-                potions.c.id
-            )
-            .having(
-                func.coalesce(func.sum(potion_quantities.c.delta), 0) > 0
-            )
-        )
-        # exclude some potions on certain days
-        exclusions = list_exclusions(day_of_week)
-        if len(exclusions) > 0:
+            # exclude some potions on certain days
+            exclusions = list_exclusions(day_of_week)
+            if len(exclusions) > 0:
+                stmt = (
+                    stmt.where(
+                        and_(
+                            not_(potions.c.sku.in_(exclusions))
+                        )
+                    )
+                )
+            all_available_potions = conn.execute(sqlalchemy.text(stmt))
+            catalog_size += add_best_sellers(catalog, all_available_potions)
+            # make sure that no duplicates can be returned by susequent queries
             stmt = (
                 stmt.where(
                     and_(
-                        not_(potions.c.sku.in_(exclusions))
+                        not_(potions.c.sku.in_([potion.sku for potion in catalog]))
                     )
                 )
             )
-        all_available_potions = conn.execute(sqlalchemy.text(stmt))
-        catalog_size += add_best_sellers(catalog, all_available_potions)
-        # make sure that no duplicates can be returned by susequent queries
-        stmt = (
-            stmt.where(
-                and_(
-                    not_(potions.c.sku.in_([potion.sku for potion in catalog]))
+            # remaining catalog is generated randomly
+            num_needed = CATALOG_MAX - catalog_size
+            if num_needed > 0:
+                stmt = (
+                    stmt.order_by(
+                        text("RANDOM()")
+                    )
+                    .limit(num_needed)
                 )
-            )
-        )
-        # remaining catalog is generated randomly
-        num_needed = CATALOG_MAX - catalog_size
-        if num_needed > 0:
-            stmt = (
-                stmt.order_by(
-                    text("RANDOM()")
-                )
-                .limit(num_needed)
-            )
-            result = conn.execute(stmt)
-            for potion in result:
-                catalog.append(potion)
-        
-        catalog_json = []
-        for potion in catalog:
-            print(f"{potion.name}: {potion.quantity}")
-            if SHOP_PHASE == PHASE_ONE:
-                qty = potion.quantity
-            elif SHOP_PHASE == PHASE_TWO:
-                qty = BOTTLE_THRESHOLD
-            catalog_json.append({
-                        "sku": potion.sku,
-                        "name": potion.name,
-                        "quantity": qty,
-                        "price": potion.price,
-                        "potion_type": [potion.red, potion.green, potion.blue, potion.dark],
-                    })
-        return catalog_json
+                result = conn.execute(stmt)
+                for potion in result:
+                    catalog.append(potion)
+            
+            catalog_json = []
+            for potion in catalog:
+                print(f"{potion.name}: {potion.quantity}")
+                if SHOP_PHASE == PHASE_ONE:
+                    qty = potion.quantity
+                elif SHOP_PHASE == PHASE_TWO:
+                    qty = BOTTLE_THRESHOLD
+                catalog_json.append({
+                            "sku": potion.sku,
+                            "name": potion.name,
+                            "quantity": qty,
+                            "price": potion.price,
+                            "potion_type": [potion.red, potion.green, potion.blue, potion.dark],
+                        })
+            return catalog_json
+    except DBAPIError as error:
+        print(f"Error returned: <<<{error}>>>")
