@@ -89,7 +89,7 @@ def get_catalog():
             catalog = []
             catalog_size = 0
             #sql = ("SELECT EXTRACT(DOW FROM current_date) AS day_of_week FROM current_date;")
-            day_of_week = int(func.extract('DOW', func.now()))
+            day_of_week = int(conn.execute(select(extract("DOW", func.current_timestamp()))))
             stmt = (
                 select(
                     [potions, func.coalesce(func.sum(potion_quantities.c.delta), 0).label("quantity")]
