@@ -120,6 +120,10 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions):
         print(f"Available Gold: {gold}")
         options = copy.deepcopy(wholesale_catalog)
         options = list_viable(gold, options) # check afford and quantity in catalog
+        if SHOP_PHASE == PHASE_TWO:
+            options = remove_all("MINI", options)
+            options = remove_all("SMALL", options)
+            options = remove_all("MEDIUM", options)
         if len(options) > 0:
             priority = list_priority(potions)
             print(f"Priority list: {priority}")
@@ -222,7 +226,10 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions):
                 print(f"Current inventory sufficient, all ml types above {ML_THRESHOLD}")
             return ({ "sku": bar.sku, "quantity": bar.quantity, } for bar in barrel_plan)
         else:
-            print("Could not afford any barrels or none available")
+            if SHOP_PHASE == PHASE_TWO:
+                print("No Large barrels offered from wholesale")
+            else:
+                print("Could not afford any barrels or none available")
     else:
         print(f"Current inventory sufficient -> {inv.num_potions} potions")
     return []
