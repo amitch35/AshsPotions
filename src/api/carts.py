@@ -290,7 +290,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 sql = f"SELECT * FROM shopping_carts WHERE id = {cart_id}; "
                 result = connection.execute(sqlalchemy.text(sql))
                 cart = result.first()
-                print(f"Cart {cart_id}: {cart}")
+                #print(f"Cart {cart_id}: {cart}")
                 if cart: # if there exists a cart with the given id
                     sql = (f"SELECT *, "
                            "(SELECT sum(delta) FROM potion_quantities "
