@@ -95,7 +95,7 @@ def get_catalog():
                     [potions, func.coalesce(func.sum(potion_quantities.c.delta), 0).label("quantity")]
                 )
                 .select_from(
-                    potions.join(potion_quantities, potions.c.id == potion_quantities.c.potion_id)
+                    join(potions, potion_quantities, potions.c.id == potion_quantities.c.potion_id)
                 )
                 .group_by(
                     potions.c.id
