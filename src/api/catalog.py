@@ -3,6 +3,7 @@ from enum import IntEnum
 from pydantic import BaseModel
 import sqlalchemy
 from sqlalchemy import *
+from sqlalchemy.exc import DBAPIError
 from src import database as db
 from src.api.bottler import BOTTLE_THRESHOLD
 
@@ -87,7 +88,7 @@ def get_catalog():
             # Implements best sellers and time based offerings before randomly offering others
             catalog = []
             catalog_size = 0
-            sql = ("SELECT EXTRACT(DOW FROM current_date) FROM current_date AS day_of_week;")
+            sql = ("SELECT EXTRACT(DOW FROM current_date) AS day_of_week FROM current_date;")
             day_of_week = int(conn.execute(sqlalchemy.text(sql)).scalar_one())
             stmt = (
                 select(
