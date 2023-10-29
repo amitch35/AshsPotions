@@ -11,7 +11,7 @@ router = APIRouter()
 
 PHASE_ONE = 1 # Getting started, growth and aquiring customers
 PHASE_TWO = 2 # Optimizing Purchases and offerings
-SHOP_PHASE = PHASE_ONE
+SHOP_PHASE = PHASE_TWO
 
 BEST_SELLERS = ["red_potion", "green_potion"]
 
