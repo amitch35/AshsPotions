@@ -12,7 +12,7 @@ PURCHASE_THRESHOLD = 280
 if SHOP_PHASE == PHASE_ONE:
     PURCHASE_MAX = 10
 elif SHOP_PHASE == PHASE_TWO:
-    PURCHASE_MAX = 3
+    PURCHASE_MAX = 10
 DARK_PURCHASE_MAX = 3
 ML_THRESHOLD = 10000
 NUM_COLORS = 4
@@ -126,7 +126,7 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions):
         if SHOP_PHASE == PHASE_TWO:
             options = remove_all("MINI", options)
             options = remove_all("SMALL", options)
-            options = remove_all("MEDIUM", options)
+            #options = remove_all("MEDIUM", options)
         if len(options) > 0:
             priority = list_priority(potions)
             print(f"Priority list: {priority}")
