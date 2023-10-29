@@ -78,7 +78,7 @@ def search_orders(
                 case search_sort_options.item_sku:
                     order_by = potions.c.name
                 case search_sort_options.line_item_total:
-                    order_by = (cart_contents.c.quantity_requested * potions.c.price)
+                    order_by = transactions.c.gold_paid
                 case search_sort_options.timestamp:
                     order_by = transactions.c.created_at
                 case _ :
@@ -104,7 +104,7 @@ def search_orders(
                     cart_contents.c.quantity_requested,
                     shopping_carts.c.customer,
                     potions.c.name,
-                    potions.c.price,
+                    transactions.c.gold_paid,
                     transactions.c.created_at,
                 )
                 .select_from(
@@ -147,7 +147,7 @@ def search_orders(
                             "line_item_id": row.id,
                             "item_sku": item_string,
                             "customer_name": f"{row.customer}",
-                            "line_item_total": (row.quantity_requested * row.price),
+                            "line_item_total": row.gold_paid,
                             "timestamp": row.created_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
                         }
                     )
