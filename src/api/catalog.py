@@ -4,7 +4,6 @@ from pydantic import BaseModel
 import sqlalchemy
 from sqlalchemy import *
 from sqlalchemy.exc import DBAPIError
-from datetime import datetime
 from src import database as db
 from src.api.bottler import BOTTLE_THRESHOLD
 
@@ -89,10 +88,17 @@ def get_catalog():
             # Implements best sellers and time based offerings before randomly offering others
             catalog = []
             catalog_size = 0
-            day_of_week = datetime.now().weekday()
+            day_of_week = int(conn.execute(select(extract("DOW", func.current_timestamp()))).scalar_one())
             stmt = (
                 select(
-                    [potions, func.coalesce(func.sum(potion_quantities.c.delta), 0).label("quantity")]
+                    potions.c.sku,
+                    potions.c.price,
+                    potions.c.name,
+                    potions.c.red,
+                    potions.c.green,
+                    potions.c.blue,
+                    potions.c.dark,
+                    func.coalesce(func.sum(potion_quantities.c.delta), 0).label("quantity")
                 )
                 .select_from(
                     join(potions, potion_quantities, potions.c.id == potion_quantities.c.potion_id)
