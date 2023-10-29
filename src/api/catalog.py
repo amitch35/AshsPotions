@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 import sqlalchemy
 from src import database as db
-from src.api.bottler import MAX_BOTTLE_NUM
+from src.api.bottler import BOTTLE_THRESHOLD
 
 router = APIRouter()
 
@@ -37,7 +37,7 @@ def get_catalog():
             catalog.append({
                         "sku": potion.sku,
                         "name": potion.name,
-                        "quantity": MAX_BOTTLE_NUM,
+                        "quantity": BOTTLE_THRESHOLD,
                         "price": potion.price,
                         "potion_type": [potion.red, potion.green, potion.blue, potion.dark],
                     })
