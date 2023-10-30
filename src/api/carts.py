@@ -189,10 +189,10 @@ def create_cart(new_cart: NewCart):
     print("----New Cart----")
     try:
         with db.engine.begin() as connection:
-            print(f"Creating cart for: {new_cart.customer}")
+            #print(f"Creating cart for: {new_cart.customer}")
             sql = f"INSERT INTO shopping_carts (customer) VALUES ('{new_cart.customer}') RETURNING shopping_carts.id;"
             new_id = connection.execute(sqlalchemy.text(sql)).scalar_one()
-            print(f"{new_cart.customer} got cart id: {new_id}")
+            print(f"Creating cart for: {new_cart.customer} ----> id: {new_id}")
         return {"cart_id": new_id}
     except DBAPIError as error:
         print(f"Error returned: <<<{error}>>>")
@@ -280,7 +280,7 @@ class CartCheckout(BaseModel):
 @router.post("/{cart_id}/checkout")
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
-    print("----Cart Checkout----")
+    print(f"----Cart {cart_id} Checkout----")
     try:
         with db.engine.begin() as connection:
             sql = f"SELECT * FROM transactions WHERE cart_id = {cart_id} ORDER BY success desc; "
@@ -315,7 +315,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                             selling += record.quantity_requested
                             total += record.price * record.quantity_requested
                         # execute transaction 
-                        print(f"Cart {cart_id} Completing transaction for {cart.customer}")
+                        #print(f"Cart {cart_id} Completing transaction for {cart.customer}")
                         sql = ("INSERT INTO global_inventory "
                             "(gold, num_red_ml, num_green_ml, num_blue_ml, num_dark_ml)"
                             f" VALUES ({total}, 0, 0, 0, 0); \n")
