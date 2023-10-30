@@ -164,7 +164,7 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions):
                         case Color.RED:
                             if red_cnt < PURCHASE_MAX:
                                 barrel = look_for("RED", options)
-                                print(f"Checked options for Red: {barrel}")
+                                #TEST:print(f"Checked options for Red: {barrel}")
                                 red_cnt += 1
                             else:
                                 barrel = None
@@ -173,7 +173,7 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions):
                         case Color.GREEN:
                             if green_cnt < PURCHASE_MAX:
                                 barrel = look_for("GREEN", options)
-                                print(f"Checked options for Green: {barrel}")
+                                #TEST:print(f"Checked options for Green: {barrel}")
                                 green_cnt += 1
                             else:
                                 barrel = None
@@ -182,7 +182,7 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions):
                         case Color.BLUE:
                             if blue_cnt < PURCHASE_MAX:
                                 barrel = look_for("BLUE", options)
-                                print(f"Checked options for Blue: {barrel}")
+                                #TEST:print(f"Checked options for Blue: {barrel}")
                                 blue_cnt += 1
                             else:
                                 barrel = None
@@ -191,7 +191,7 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions):
                         case Color.DARK:
                             if dark_cnt < DARK_PURCHASE_MAX:
                                 barrel = look_for("DARK", options)
-                                print(f"Checked options for Dark: {barrel}")
+                                #TEST:print(f"Checked options for Dark: {barrel}")
                                 dark_cnt += 1
                             else:
                                 barrel = None
