@@ -13,7 +13,7 @@ class Color(IntEnum):
     DARK = 3
     BLANK = 4
 
-BOTTLE_THRESHOLD = 30
+BOTTLE_THRESHOLD = 23
 MAX_BOTTLE_NUM = 99999
 
 router = APIRouter(
