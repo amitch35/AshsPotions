@@ -5,6 +5,7 @@ from src.api import auth
 import sqlalchemy
 from sqlalchemy.exc import DBAPIError
 from src import database as db
+from src.api.bottler import MAX_BOTTLE_SLOTS
 
 class Color(IntEnum):
     RED = 0
@@ -13,7 +14,8 @@ class Color(IntEnum):
     DARK = 3
     BLANK = 4
 
-BOTTLE_THRESHOLD = 23
+NUM_POTION_MIXES = 13
+BOTTLE_THRESHOLD = MAX_BOTTLE_SLOTS // NUM_POTION_MIXES
 MAX_BOTTLE_SLOTS = 300
 MAX_BOTTLE_NUM = 99999
 
