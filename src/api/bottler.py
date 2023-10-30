@@ -14,6 +14,7 @@ class Color(IntEnum):
     BLANK = 4
 
 BOTTLE_THRESHOLD = 23
+MAX_BOTTLE_SLOTS = 300
 MAX_BOTTLE_NUM = 99999
 
 router = APIRouter(
@@ -77,6 +78,7 @@ def make_bottle_plan(inv, potions):
     inv_blue = inv.num_blue_ml
     inv_dark = inv.num_dark_ml
     # TODO: make it so never goes above 300 using inv.num_potions
+    slots_available = MAX_BOTTLE_SLOTS - inv.num_potions
     for name, red, green, blue, dark, quantity in potions:
         if quantity < BOTTLE_THRESHOLD:
             if red > 0:
@@ -100,6 +102,8 @@ def make_bottle_plan(inv, potions):
             if num_potions > 0:
                 # bottle as much as possible up to threshold
                 num_potions = min(num_potions, max(0, BOTTLE_THRESHOLD - quantity))
+                # but not more than can fit in available slots
+                num_potions = min(slots_available, num_potions)
                 if num_potions > 0:
                     print(f"Plan to bottle {num_potions} {name} potions")
                     inv_red -= (red * num_potions)
@@ -110,6 +114,8 @@ def make_bottle_plan(inv, potions):
                         "potion_type": [red, green, blue, dark],
                         "quantity": num_potions,
                     })
+                    # update available slots
+                    slots_available -= num_potions
                 else: # If inventory alread has more than threshold
                     print(f"No need to bottle {name} with {quantity} in stock")
             else:
