@@ -117,7 +117,10 @@ def make_bottle_plan(inv, potions):
                     # update available slots
                     slots_available -= num_potions
                 else: # If inventory alread has more than threshold
-                    print(f"No need to bottle {name} with {quantity} in stock")
+                    if slots_available == 0:
+                        print(f"Did not bottle {name} to avoid exceeding {MAX_BOTTLE_SLOTS} potions")
+                    else:
+                        print(f"No need to bottle {name} with {quantity} in stock")
             else:
                 print(f"Not enough ml to bottle {name}")
         else:
