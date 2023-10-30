@@ -149,7 +149,7 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions):
                 options = remove_all("DARK", options)
                 print(f"Alread have enough dark ml: {inv.num_dark_ml}")
             if len(priority) > 0:
-                print(f"Updated Priority list: {priority}")
+                #print(f"Updated Priority list: {priority}")
                 i = 0
                 barrel = None
                 red_cnt = 0
@@ -157,9 +157,9 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions):
                 blue_cnt = 0
                 dark_cnt = 0
                 while (len(options) > 0):
-                    print(f"Remaining number of options: {len(options)}")
+                    #TEST:print(f"Remaining number of options: {len(options)}")
                     curr_color = priority[i]
-                    print(f"Priority {i}, value {Color(curr_color).name}")
+                    #TEST:print(f"Priority {i}, value {Color(curr_color).name}")
                     match curr_color:
                         case Color.RED:
                             if red_cnt < PURCHASE_MAX:
@@ -211,23 +211,26 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions):
                     # Check if there is a Barrel with the same SKU already in barrel_plan
                     index = next((index for index, item in enumerate(barrel_plan) if item.sku == barrel.sku), None)
                     if index is not None:
-                        print("Barrel already in plan")
+                        #TEST:print("Barrel already in plan")
                         wholesale_barrel = next((bar for bar in wholesale_catalog if bar.sku == barrel.sku), None)
                         if wholesale_barrel.quantity == barrel_plan[index].quantity: # If already asking for max offered
-                            print(f"Already asking for all available {barrel.sku}, looking for other options")
+                            print(f"Asking for all available {barrel.sku}, looking for other options")
                             options = [bar for bar in options if bar.sku != wholesale_barrel.sku] # Remove barrel from options
                         else: # If there is still stock available
-                            print(f"Adding another {barrel.sku} to plan")
+                            #TEST:print(f"Adding another {barrel.sku} to plan")
                             barrel_plan[index].quantity += 1 # add another barrel to plan
                     else:
-                        print(f"Barrel added to plan: {barrel.sku}")
+                        #TEST:print(f"Barrel added to plan: {barrel.sku}")
                         # Only choose to get 1 per iteration
                         plan_barrel = Barrel(sku=barrel.sku, ml_per_barrel=barrel.ml_per_barrel, potion_type=barrel.potion_type, price=barrel.price, quantity=1)
                         barrel_plan.append(plan_barrel)
-                    print(f"Remaining Gold: {gold}")
+                    #TEST:print(f"Remaining Gold: {gold}")
                     options = list_viable(gold, options) # check what options remain with current gold
             else:
                 print(f"Current inventory sufficient, all ml types above {ML_THRESHOLD}")
+            plan_list = [f"sku: {bar.sku}, quantity: {bar.quantity}" for bar in barrel_plan]
+            for item in plan_list:
+                print(item)
             return ({ "sku": bar.sku, "quantity": bar.quantity, } for bar in barrel_plan)
         else:
             if SHOP_PHASE == PHASE_TWO:
