@@ -299,34 +299,33 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                             f"JOIN potions AS pot ON cnt.potion_id = pot.id "
                             f"WHERE cart_id = {cart_id}; ")
                     result = connection.execute(sqlalchemy.text(sql))
-                    cart_content = result.first()
                     transaction = False
                     total = 0
                     selling = 0
-                    if cart_content: # if there is anything in the cart
-                        # check validity of cart and determine total price
-                        result = connection.execute(sqlalchemy.text(sql))
-                        for record in result:
-                            if record.quantity < record.quantity_requested:
-                                print(f"Cart with id {cart_id} requested too many potions (insufficient stock)")
-                                raise HTTPException(
-                                    status_code=status.HTTP_401_UNAUTHORIZED, detail="Forbidden: requested too many potions"
-                                )
-                            selling += record.quantity_requested
-                            total += record.price * record.quantity_requested
-                        # execute transaction 
-                        #print(f"Cart {cart_id} Completing transaction for {cart.customer}")
-                        sql = ("INSERT INTO global_inventory "
-                            "(gold, num_red_ml, num_green_ml, num_blue_ml, num_dark_ml)"
-                            f" VALUES ({total}, 0, 0, 0, 0); \n")
-                        sql += ("INSERT INTO potion_quantities (potion_id, delta) "
-                            "SELECT potion_id, - quantity_requested "
-                            "FROM cart_contents "
-                            f"WHERE cart_id = {cart_id}; ")
-                        connection.execute(sqlalchemy.text(sql))
-                        transaction = True
-                    else:
-                        print(f"Cart with id {cart_id} was empty")
+                    # check validity of cart and determine total price
+                    for record in result:
+                        if record.quantity < record.quantity_requested:
+                            print(f"Cart with id {cart_id} requested too many potions (insufficient stock)")
+                            raise HTTPException(
+                                status_code=status.HTTP_401_UNAUTHORIZED, detail="Forbidden: requested too many potions"
+                            )
+                        selling += record.quantity_requested
+                        total += record.price * record.quantity_requested
+                    if selling == 0:
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST, detail="Bad Request: Cart was empty"
+                        )
+                    # execute transaction 
+                    #print(f"Cart {cart_id} Completing transaction for {cart.customer}")
+                    sql = ("INSERT INTO global_inventory "
+                        "(gold, num_red_ml, num_green_ml, num_blue_ml, num_dark_ml)"
+                        f" VALUES ({total}, 0, 0, 0, 0); \n")
+                    sql += ("INSERT INTO potion_quantities (potion_id, delta) "
+                        "SELECT potion_id, - quantity_requested "
+                        "FROM cart_contents "
+                        f"WHERE cart_id = {cart_id}; ")
+                    connection.execute(sqlalchemy.text(sql))
+                    transaction = True
                     sql = (f"INSERT INTO transactions (cart_id, success, payment, gold_paid) "
                         f"VALUES ({cart_id}, {transaction}, '{cart_checkout.payment}', {total}); ")
                     connection.execute(sqlalchemy.text(sql))
