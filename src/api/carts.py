@@ -192,7 +192,7 @@ def create_cart(new_cart: NewCart):
             #print(f"Creating cart for: {new_cart.customer}")
             sql = f"INSERT INTO shopping_carts (customer) VALUES ('{new_cart.customer}') RETURNING shopping_carts.id;"
             new_id = connection.execute(sqlalchemy.text(sql)).scalar_one()
-            print(f"Creating cart for: {new_cart.customer} ----> id: {new_id}")
+            print(f"Creating cart {new_id} for: {new_cart.customer}")
         return {"cart_id": new_id}
     except DBAPIError as error:
         print(f"Error returned: <<<{error}>>>")
