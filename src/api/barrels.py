@@ -4,11 +4,11 @@ from src.api import auth
 import sqlalchemy
 from sqlalchemy.exc import DBAPIError
 from src import database as db
-from src.api.bottler import Color
+from src.api.bottler import Color, MAX_BOTTLE_SLOTS
 from src.api.catalog import SHOP_PHASE, PHASE_ONE, PHASE_TWO
 import copy
 
-PURCHASE_THRESHOLD = 280
+PURCHASE_THRESHOLD = MAX_BOTTLE_SLOTS
 if SHOP_PHASE == PHASE_ONE:
     PURCHASE_MAX = 10
     ML_THRESHOLD = 10000
