@@ -57,7 +57,7 @@ def list_exclusions(day_of_week):
             exclude = ["red_potion", "rusty_potion"]
         case DayOfWeek.MONDAY:
             print("Today is Monday.")
-            exclude = ["blue_potion"]
+            exclude = ["blue_potion", "green_potion"]
         case DayOfWeek.TUESDAY:
             print("Today is Tuesday.")
             exclude = []
@@ -110,16 +110,17 @@ def get_catalog():
                     func.coalesce(func.sum(potion_quantities.c.delta), 0) > 0
                 )
             )
-            # exclude some potions on certain days
-            exclusions = list_exclusions(day_of_week)
-            if len(exclusions) > 0:
-                stmt = (
-                    stmt.where(
-                        and_(
-                            not_(potions.c.sku.in_(exclusions))
+            if SHOP_PHASE == PHASE_TWO: # TODO: remove this line after gaining stability
+                # exclude some potions on certain days
+                exclusions = list_exclusions(day_of_week)
+                if len(exclusions) > 0:
+                    stmt = (
+                        stmt.where(
+                            and_(
+                                not_(potions.c.sku.in_(exclusions))
+                            )
                         )
                     )
-                )
             all_available_potions = conn.execute(stmt)
             catalog_size += add_best_sellers(catalog, all_available_potions)
             # make sure that no duplicates can be returned by susequent queries
