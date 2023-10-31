@@ -238,7 +238,7 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions):
             else:
                 print("Could not afford any barrels or none available")
     else:
-        print(f"Current inventory sufficient -> {inv.num_potions} potions")
+        print(f"Current inventory sufficient -> {num_potions} potions")
     return []
 
 # Gets called once a day
