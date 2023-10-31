@@ -163,7 +163,7 @@ def get_catalog():
                             "sku": "red_potion",
                             "name": "Red",
                             "quantity": 5,
-                            "price": 60,
+                            "price": 55,
                             "potion_type": [100, 0, 0, 0],
                         })
             return catalog_json
