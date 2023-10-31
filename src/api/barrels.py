@@ -118,6 +118,8 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
         return "Nothing Delivered"
     
 def make_barrel_plan(wholesale_catalog, inv, potions, num_potions):
+    if num_potions is None:
+        num_potions = 0
     if num_potions < PURCHASE_THRESHOLD:
         barrel_plan = []
         gold = inv.gold
