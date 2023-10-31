@@ -78,12 +78,8 @@ def make_bottle_plan(inv, potions):
     inv_green = inv.num_green_ml
     inv_blue = inv.num_blue_ml
     inv_dark = inv.num_dark_ml
-    if inv.num_potions is None:
-        potions_inv = 0
-    else:
-        potions_inv = inv.num_potions
-    # make it so never goes above 300 using inv.num_potions
-    slots_available = MAX_BOTTLE_SLOTS - potions_inv
+    # make it so never goes above max of 300 
+    slots_available = MAX_BOTTLE_SLOTS - inv.num_potions
     for name, red, green, blue, dark, quantity in potions:
         if quantity < BOTTLE_THRESHOLD:
             if red > 0:
@@ -159,7 +155,7 @@ def get_bottle_plan():
                     "SUM(num_dark_ml) AS num_dark_ml "
                 "FROM global_inventory) as inv, "
                 "(SELECT "
-                    "SUM(delta) AS num_potions "
+                    "COALESCE(SUM(delta),0) AS num_potions "
                 "FROM potion_quantities) as potion_sum;")
             result = connection.execute(sqlalchemy.text(sql))
             inv = result.first() # inventory is on a single row
