@@ -27,17 +27,13 @@ def get_inventory():
                     "SUM(num_dark_ml) AS num_dark_ml "
                 "FROM global_inventory) as inv, "
                 "(SELECT "
-                    "SUM(delta) AS num_potions "
+                    "COALESCE(SUM(delta),0) AS num_potions "
                 "FROM potion_quantities) as potion_sum;")
         result = connection.execute(sqlalchemy.text(sql))
         inv = result.first() # inventory is on a single row
         total_ml = inv.num_red_ml + inv.num_green_ml + inv.num_blue_ml + inv.num_dark_ml
-        if inv.num_potions is None:
-            num_potions = 0
-        else:
-            num_potions = inv.num_potions
-        print(f"number_of_potions: {num_potions}, ml_in_barrels: {total_ml}, gold: {inv.gold}")
-        return {"number_of_potions": num_potions, "ml_in_barrels": total_ml, "gold": inv.gold}
+        print(f"number_of_potions: {inv.num_potions}, ml_in_barrels: {total_ml}, gold: {inv.gold}")
+        return {"number_of_potions": inv.num_potions, "ml_in_barrels": total_ml, "gold": inv.gold}
 
 class Result(BaseModel):
     gold_match: bool
