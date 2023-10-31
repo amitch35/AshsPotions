@@ -118,8 +118,6 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
         return "Nothing Delivered"
     
 def make_barrel_plan(wholesale_catalog, inv, potions, num_potions):
-    if num_potions is None:
-        num_potions = 0
     if num_potions < PURCHASE_THRESHOLD:
         barrel_plan = []
         gold = inv.gold
@@ -278,7 +276,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                     "GROUP BY potions.id "
                     "ORDER BY quantity, potions.id; ")
             potions = connection.execute(sqlalchemy.text(sql))
-            sql = ("SELECT SUM(delta) FROM potion_quantities")
+            sql = ("SELECT COALESCE(SUM(delta),0) FROM potion_quantities")
             num_potions = connection.execute(sqlalchemy.text(sql)).scalar_one()
             return make_barrel_plan(wholesale_catalog, inv, potions, num_potions)
     except DBAPIError as error:
