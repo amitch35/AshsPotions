@@ -5,7 +5,7 @@ import sqlalchemy
 from sqlalchemy import *
 from sqlalchemy.exc import DBAPIError
 from src import database as db
-from src.api.bottler import make_bottle_plan
+from src.api.bottler import make_bottle_plan, Potion
 from src.api.audit import get_global_inventory
 
 router = APIRouter()
@@ -31,16 +31,6 @@ class DayOfWeek(IntEnum):
     THURSDAY = 4
     FRIDAY = 5
     SATURDAY = 6
-
-class Potion(BaseModel):
-    sku: str
-    price: int
-    name: str
-    red: int
-    green: int
-    blue: int
-    dark: int
-    quantity: int
 
 def add_best_sellers(catalog: list[Potion], potions):
     num_added = 0

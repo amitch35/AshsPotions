@@ -73,6 +73,16 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory]):
     else:
         return "Nothing Delivered"
     
+class Potion(BaseModel):
+    sku: str
+    price: int
+    name: str
+    red: int
+    green: int
+    blue: int
+    dark: int
+    quantity: int
+    
 def make_bottle_plan(inv, potions):
     bottle_plan = []
     inv_red = inv.num_red_ml
@@ -112,14 +122,14 @@ def make_bottle_plan(inv, potions):
                     inv_green -= (green * num_potions)
                     inv_blue -= (blue * num_potions)
                     inv_dark -= (dark * num_potions)
-                    bottle_plan.append({
-                        "name": name,
-                        "red": red,
-                        "green": green,
-                        "blue": blue,
-                        "dark": dark,
-                        "quantity": num_potions,
-                    })
+                    bottle_plan.append(Potion(sku=None, name=None,
+                        name=name,
+                        red=red,
+                        green=green,
+                        blue=blue,
+                        dark=dark,
+                        quantity=num_potions
+                    ))
                     # update available slots
                     slots_available -= num_potions
                 else: # If inventory alread has more than threshold
