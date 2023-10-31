@@ -5,7 +5,8 @@ import sqlalchemy
 from sqlalchemy import *
 from sqlalchemy.exc import DBAPIError
 from src import database as db
-from src.api.bottler import BOTTLE_THRESHOLD
+from src.api.bottler import make_bottle_plan
+from src.api.audit import get_global_inventory
 
 router = APIRouter()
 
@@ -143,18 +144,24 @@ def get_catalog():
                 result = conn.execute(stmt)
                 for potion in result:
                     catalog.append(potion)
+            # Figure out what is expected to be bottled
+            inv = get_global_inventory(conn)
+            bottle_plan = make_bottle_plan(inv, catalog)
+            # Increase quantity in catalog if expected to bottle more
+            for potion in bottle_plan:
+                for item in catalog:
+                    if potion.name == item.name:
+                        item.quantity += potion.quantity
+                        break  # Break out of the inner loop after finding a match
+
             print("Ash's Catalog:")
             catalog_json = []
             for potion in catalog:
                 print(f"{potion.name}: {potion.quantity}")
-                if SHOP_PHASE == PHASE_ONE:
-                    qty = potion.quantity
-                elif SHOP_PHASE == PHASE_TWO:
-                    qty = BOTTLE_THRESHOLD
                 catalog_json.append({
                             "sku": potion.sku,
                             "name": potion.name,
-                            "quantity": qty,
+                            "quantity": potion.quantity,
                             "price": potion.price,
                             "potion_type": [potion.red, potion.green, potion.blue, potion.dark],
                         })

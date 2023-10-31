@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from src.api import auth
-import math
 import sqlalchemy
 from src import database as db
 
@@ -11,12 +10,8 @@ router = APIRouter(
     dependencies=[Depends(auth.get_api_key)],
 )
 
-@router.get("/inventory")
-def get_inventory():
-    """ """
-    print("----Get Inventory----")
-    with db.engine.begin() as connection:
-        sql = ("SELECT gold, potion_sum.num_potions, "
+def get_global_inventory(connection):
+    sql = ("SELECT gold, potion_sum.num_potions, "
                "num_red_ml, num_green_ml, num_blue_ml, num_dark_ml "
                "FROM "
                "(SELECT "
@@ -29,8 +24,15 @@ def get_inventory():
                 "(SELECT "
                     "COALESCE(SUM(delta),0) AS num_potions "
                 "FROM potion_quantities) as potion_sum;")
-        result = connection.execute(sqlalchemy.text(sql))
-        inv = result.first() # inventory is on a single row
+    result = connection.execute(sqlalchemy.text(sql))
+    return result.first() # inventory is on a single row
+
+@router.get("/inventory")
+def get_inventory():
+    """ """
+    print("----Get Inventory----")
+    with db.engine.begin() as connection:
+        inv = get_global_inventory(connection)
         total_ml = inv.num_red_ml + inv.num_green_ml + inv.num_blue_ml + inv.num_dark_ml
         print(f"number_of_potions: {inv.num_potions}, ml_in_barrels: {total_ml}, gold: {inv.gold}")
         return {"number_of_potions": inv.num_potions, "ml_in_barrels": total_ml, "gold": inv.gold}

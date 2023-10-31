@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from enum import IntEnum
 from pydantic import BaseModel
 from src.api import auth
+from src.api.audit import get_global_inventory
 import sqlalchemy
 from sqlalchemy.exc import DBAPIError
 from src import database as db
@@ -112,7 +113,11 @@ def make_bottle_plan(inv, potions):
                     inv_blue -= (blue * num_potions)
                     inv_dark -= (dark * num_potions)
                     bottle_plan.append({
-                        "potion_type": [red, green, blue, dark],
+                        "name": name,
+                        "red": red,
+                        "green": green,
+                        "blue": blue,
+                        "dark": dark,
                         "quantity": num_potions,
                     })
                     # update available slots
@@ -144,21 +149,7 @@ def get_bottle_plan():
     print("----Bottler Plan----")
     try:
         with db.engine.begin() as connection:
-            sql = ("SELECT gold, potion_sum.num_potions, "
-               "num_red_ml, num_green_ml, num_blue_ml, num_dark_ml "
-               "FROM "
-               "(SELECT "
-                    "SUM(gold) AS gold, "
-                    "SUM(num_red_ml) AS num_red_ml, "
-                    "SUM(num_green_ml) AS num_green_ml, "
-                    "SUM(num_blue_ml) AS num_blue_ml, "
-                    "SUM(num_dark_ml) AS num_dark_ml "
-                "FROM global_inventory) as inv, "
-                "(SELECT "
-                    "COALESCE(SUM(delta),0) AS num_potions "
-                "FROM potion_quantities) as potion_sum;")
-            result = connection.execute(sqlalchemy.text(sql))
-            inv = result.first() # inventory is on a single row
+            inv = get_global_inventory(connection)
             # Order potions by quantity (include name, quantity and ml mix info)
             sql = ("SELECT potions.name, "
                         "potions.red, potions.green, potions.blue, potions.dark, "
@@ -169,7 +160,14 @@ def get_bottle_plan():
                     "GROUP BY potions.id "
                     "ORDER BY quantity, potions.id; ")
             potions = connection.execute(sqlalchemy.text(sql))
-            return make_bottle_plan(inv, potions)
+            bottle_plan = make_bottle_plan(inv, potions)
+            bottle_plan_json = []
+            for potion in bottle_plan:
+                bottle_plan_json.append({
+                        "potion_type": [potion.red, potion.green, potion.blue, potion.dark],
+                        "quantity": potion.quantity,
+                    })
+            return bottle_plan_json
     except DBAPIError as error:
         print(f"Error returned: <<<{error}>>>")
 
