@@ -143,7 +143,7 @@ def get_catalog():
                 result = conn.execute(stmt)
                 for potion in result:
                     catalog.append(potion)
-            
+            print("Ash's Catalog:")
             catalog_json = []
             for potion in catalog:
                 print(f"{potion.name}: {potion.quantity}")
@@ -157,14 +157,6 @@ def get_catalog():
                             "quantity": qty,
                             "price": potion.price,
                             "potion_type": [potion.red, potion.green, potion.blue, potion.dark],
-                        })
-            # TODO:
-            catalog_json.append({
-                            "sku": "red_potion",
-                            "name": "Red",
-                            "quantity": 5,
-                            "price": 55,
-                            "potion_type": [100, 0, 0, 0],
                         })
             return catalog_json
     except DBAPIError as error:
