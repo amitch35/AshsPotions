@@ -158,6 +158,14 @@ def get_catalog():
                             "price": potion.price,
                             "potion_type": [potion.red, potion.green, potion.blue, potion.dark],
                         })
+            # TODO:
+            catalog_json.append({
+                            "sku": "red_potion",
+                            "name": "Red",
+                            "quantity": 5,
+                            "price": 50,
+                            "potion_type": [100, 0, 0, 0],
+                        })
             return catalog_json
     except DBAPIError as error:
         print(f"Error returned: <<<{error}>>>")
