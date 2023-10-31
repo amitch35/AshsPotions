@@ -283,6 +283,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     print(f"----Cart {cart_id} Checkout----")
     try:
         with db.engine.begin() as connection:
+            connection = connection.execution_options(isolation_level="SERIALIZABLE")
             sql = f"SELECT * FROM transactions WHERE cart_id = {cart_id} ORDER BY success desc; "
             result = connection.execute(sqlalchemy.text(sql))
             prev_transaction = result.first()
