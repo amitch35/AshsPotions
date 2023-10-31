@@ -122,7 +122,7 @@ def make_bottle_plan(inv, potions):
                     inv_green -= (num_green * num_potions)
                     inv_blue -= (num_blue * num_potions)
                     inv_dark -= (num_dark * num_potions)
-                    bottle_plan.append(Potion(sku=None, name=None,
+                    bottle_plan.append(Potion(sku=None, price=None,
                         name=pot_name,
                         red=num_red,
                         green=num_green,
