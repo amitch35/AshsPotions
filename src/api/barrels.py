@@ -5,14 +5,17 @@ import sqlalchemy
 from sqlalchemy.exc import DBAPIError
 from src import database as db
 from src.api.bottler import Color, MAX_BOTTLE_SLOTS
-from src.api.catalog import SHOP_PHASE, PHASE_ONE, PHASE_TWO
+from src.api.catalog import SHOP_PHASE, PHASE_ONE, PHASE_TWO, PHASE_THREE, PHASE_FOUR
 import copy
 
-PURCHASE_THRESHOLD = MAX_BOTTLE_SLOTS
-if SHOP_PHASE == PHASE_ONE:
+if SHOP_PHASE >= PHASE_FOUR:
+    PURCHASE_THRESHOLD = 0
+else:
+    PURCHASE_THRESHOLD = MAX_BOTTLE_SLOTS
+if SHOP_PHASE == PHASE_ONE or SHOP_PHASE == PHASE_TWO:
     PURCHASE_MAX = 10
     ML_THRESHOLD = 10000
-elif SHOP_PHASE == PHASE_TWO:
+elif SHOP_PHASE == PHASE_THREE:
     PURCHASE_MAX = 5
     ML_THRESHOLD = 20000
 DARK_PURCHASE_MAX = 8
@@ -124,7 +127,7 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions):
         print(f"Available Gold: {gold}")
         options = copy.deepcopy(wholesale_catalog)
         options = list_viable(gold, options) # check afford and quantity in catalog
-        if SHOP_PHASE == PHASE_TWO:
+        if SHOP_PHASE >= PHASE_THREE:
             options = remove_all("MINI", options)
             options = remove_all("SMALL", options)
             options = remove_all("MEDIUM", options)

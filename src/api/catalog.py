@@ -10,8 +10,10 @@ from src.api.audit import get_global_inventory
 
 router = APIRouter()
 
-PHASE_ONE = 1 # Getting started, growth and aquiring customers
-PHASE_TWO = 2 # Optimizing Purchases and offerings
+PHASE_ONE = 1   # Getting started, growth and aquiring customers
+PHASE_TWO = 2   # Optimizing potion offerings
+PHASE_THREE = 3 # Optimizing Barrel Purchases
+PHASE_FOUR = 4  # Stop buying barrels
 SHOP_PHASE = PHASE_ONE
 
 BEST_SELLERS = ["red_potion", "green_potion"]
@@ -101,8 +103,8 @@ def get_catalog():
                     func.coalesce(func.sum(potion_quantities.c.delta), 0) > 0
                 )
             )
-            if SHOP_PHASE == PHASE_TWO: # TODO: remove this line after gaining stability
-                # exclude some potions on certain days
+            if SHOP_PHASE >= PHASE_TWO:
+                # Exclude certain potions based on the day
                 exclusions = list_exclusions(day_of_week)
                 if len(exclusions) > 0:
                     stmt = (
