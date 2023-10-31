@@ -91,56 +91,56 @@ def make_bottle_plan(inv, potions):
     inv_dark = inv.num_dark_ml
     # make it so never goes above max of 300 
     slots_available = MAX_BOTTLE_SLOTS - inv.num_potions
-    for name, red, green, blue, dark, quantity in potions:
-        if quantity < BOTTLE_THRESHOLD:
-            if red > 0:
-                red_ok = (inv_red // red)
+    for pot_name, num_red, num_green, num_blue, num_dark, pot_quantity in potions:
+        if pot_quantity < BOTTLE_THRESHOLD:
+            if num_red > 0:
+                red_ok = (inv_red // num_red)
             else:
                 red_ok = MAX_BOTTLE_NUM
-            if green > 0:
-                green_ok = (inv_green // green)
+            if num_green > 0:
+                green_ok = (inv_green // num_green)
             else:
                 green_ok = MAX_BOTTLE_NUM
-            if blue > 0:
-                blue_ok = (inv_blue // blue)
+            if num_blue > 0:
+                blue_ok = (inv_blue // num_blue)
             else:
                 blue_ok = MAX_BOTTLE_NUM
-            if dark > 0:
-                dark_ok = (inv_dark // dark)
+            if num_dark > 0:
+                dark_ok = (inv_dark // num_dark)
             else:
                 dark_ok = MAX_BOTTLE_NUM
             # How many potions can be mixed
             num_potions = min(red_ok, green_ok, blue_ok, dark_ok)
             if num_potions > 0:
                 # bottle as much as possible up to threshold
-                num_potions = min(num_potions, max(0, BOTTLE_THRESHOLD - quantity))
+                num_potions = min(num_potions, max(0, BOTTLE_THRESHOLD - pot_quantity))
                 # but not more than can fit in available slots
                 num_potions = min(slots_available, num_potions)
                 if num_potions > 0:
-                    print(f"Plan to bottle {num_potions} {name} potions")
-                    inv_red -= (red * num_potions)
-                    inv_green -= (green * num_potions)
-                    inv_blue -= (blue * num_potions)
-                    inv_dark -= (dark * num_potions)
+                    print(f"Plan to bottle {num_potions} {pot_name} potions")
+                    inv_red -= (num_red * num_potions)
+                    inv_green -= (num_green * num_potions)
+                    inv_blue -= (num_blue * num_potions)
+                    inv_dark -= (num_dark * num_potions)
                     bottle_plan.append(Potion(sku=None, name=None,
-                        name=name,
-                        red=red,
-                        green=green,
-                        blue=blue,
-                        dark=dark,
+                        name=pot_name,
+                        red=num_red,
+                        green=num_green,
+                        blue=num_blue,
+                        dark=num_dark,
                         quantity=num_potions
                     ))
                     # update available slots
                     slots_available -= num_potions
                 else: # If inventory alread has more than threshold
                     if slots_available == 0:
-                        print(f"Did not bottle {name} to avoid exceeding {MAX_BOTTLE_SLOTS} potions")
+                        print(f"Did not bottle {pot_name} to avoid exceeding {MAX_BOTTLE_SLOTS} potions")
                     else:
-                        print(f"No need to bottle {name} with {quantity} in stock")
+                        print(f"No need to bottle {pot_name} with {pot_quantity} in stock")
             else:
-                print(f"Not enough ml to bottle {name}")
+                print(f"Not enough ml to bottle {pot_name}")
         else:
-                print(f"Already have {quantity} of {name}")
+                print(f"Already have {pot_quantity} of {pot_name}")
     return bottle_plan
 
 # Gets called 4 times a day
