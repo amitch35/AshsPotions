@@ -91,58 +91,58 @@ def make_bottle_plan(inv, potions):
     inv_dark = inv.num_dark_ml
     # make it so never goes above max of 300 
     slots_available = MAX_BOTTLE_SLOTS - inv.num_potions
-    for pot_name, num_red, num_green, num_blue, num_dark, pot_quantity in potions:
-        if pot_quantity < BOTTLE_THRESHOLD:
-            if num_red > 0:
-                red_ok = (inv_red // num_red)
+    for potion in potions:
+        if potion.quantity < BOTTLE_THRESHOLD:
+            if potion.red > 0:
+                red_ok = (inv_red // potion.red)
             else:
                 red_ok = MAX_BOTTLE_NUM
-            if num_green > 0:
-                green_ok = (inv_green // num_green)
+            if potion.green > 0:
+                green_ok = (inv_green // potion.green)
             else:
                 green_ok = MAX_BOTTLE_NUM
-            if num_blue > 0:
-                blue_ok = (inv_blue // num_blue)
+            if potion.blue > 0:
+                blue_ok = (inv_blue // potion.blue)
             else:
                 blue_ok = MAX_BOTTLE_NUM
-            if num_dark > 0:
-                dark_ok = (inv_dark // num_dark)
+            if potion.dark > 0:
+                dark_ok = (inv_dark // potion.dark)
             else:
                 dark_ok = MAX_BOTTLE_NUM
             # How many potions can be mixed
             num_potions = min(red_ok, green_ok, blue_ok, dark_ok)
             if num_potions > 0:
                 # bottle as much as possible up to threshold
-                num_potions = min(num_potions, max(0, BOTTLE_THRESHOLD - pot_quantity))
+                num_potions = min(num_potions, max(0, BOTTLE_THRESHOLD - potion.quantity))
                 # but not more than can fit in available slots
                 num_potions = min(slots_available, num_potions)
                 if num_potions > 0:
-                    print(f"Plan to bottle {num_potions} {pot_name} potions")
-                    inv_red -= (num_red * num_potions)
-                    inv_green -= (num_green * num_potions)
-                    inv_blue -= (num_blue * num_potions)
-                    inv_dark -= (num_dark * num_potions)
+                    print(f"Plan to bottle {num_potions} {potion.name} potions")
+                    inv_red -= (potion.red * num_potions)
+                    inv_green -= (potion.green * num_potions)
+                    inv_blue -= (potion.blue * num_potions)
+                    inv_dark -= (potion.dark * num_potions)
                     bottle_plan.append(Potion(
                         sku="", 
                         price=0,
-                        name=pot_name,
-                        red=num_red,
-                        green=num_green,
-                        blue=num_blue,
-                        dark=num_dark,
+                        name=potion.name,
+                        red=potion.red,
+                        green=potion.green,
+                        blue=potion.blue,
+                        dark=potion.dark,
                         quantity=num_potions
                     ))
                     # update available slots
                     slots_available -= num_potions
                 else: # If inventory alread has more than threshold
                     if slots_available == 0:
-                        print(f"Did not bottle {pot_name} to avoid exceeding {MAX_BOTTLE_SLOTS} potions")
+                        print(f"Did not bottle {potion.name} to avoid exceeding {MAX_BOTTLE_SLOTS} potions")
                     else:
-                        print(f"No need to bottle {pot_name} with {pot_quantity} in stock")
+                        print(f"No need to bottle {potion.name} with {potion.quantity} in stock")
             else:
-                print(f"Not enough ml to bottle {pot_name}")
+                print(f"Not enough ml to bottle {potion.name}")
         else:
-                print(f"Already have {pot_quantity} of {pot_name}")
+                print(f"Already have {potion.quantity} of {potion.name}")
     return bottle_plan
 
 # Gets called 4 times a day
