@@ -78,7 +78,9 @@ def make_bottle_plan(inv, potions):
     inv_green = inv.num_green_ml
     inv_blue = inv.num_blue_ml
     inv_dark = inv.num_dark_ml
-    # TODO: make it so never goes above 300 using inv.num_potions
+    if inv.num_potions is None:
+        inv.num_potions = 0
+    # make it so never goes above 300 using inv.num_potions
     slots_available = MAX_BOTTLE_SLOTS - inv.num_potions
     for name, red, green, blue, dark, quantity in potions:
         if quantity < BOTTLE_THRESHOLD:
