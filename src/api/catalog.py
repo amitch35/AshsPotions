@@ -154,7 +154,7 @@ def get_catalog():
             for potion in bottle_plan:
                 for item in pot_catalog:
                     if potion.name == item.name:
-                        item.quantity += potion.quantity
+                        item.quantity += (potion.quantity - 1)
                         break  # Break out of the inner loop after finding a match
 
             print("Ash's Catalog:")
