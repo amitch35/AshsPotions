@@ -101,7 +101,7 @@ def get_catalog():
             all_potions = []
             result = conn.execute(stmt.order_by("quantity", potions.c.id))
             for potion in result:
-                all_available_potions.append(Potion(
+                all_potions.append(Potion(
                         sku=potion.sku, 
                         price=potion.price,
                         name=potion.name,
