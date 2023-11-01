@@ -114,7 +114,7 @@ def get_catalog():
                             )
                         )
                     )
-            all_available_potions = conn.execute(stmt)
+            all_available_potions = conn.execute(stmt.order_by("quantity", potions.c.id))
             catalog_size += add_best_sellers(catalog, all_available_potions)
             # make sure that no duplicates can be returned by susequent queries
             stmt = (
