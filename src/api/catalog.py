@@ -72,16 +72,14 @@ def list_exclusions(day_of_week):
 def get_catalog():
     """
     Each unique item combination must have only a single price.
+    Implements best sellers and time based offerings before randomly offering others
     """
 
     # Can return a max of 6 items.
     print("----Catalog----")
     try:
         with db.engine.begin() as conn:
-            # Implements best sellers and time based offerings before randomly offering others
-            catalog = []
-            catalog_size = 0
-            day_of_week = int(conn.execute(select(extract("DOW", func.current_timestamp()))).scalar_one())
+            # Get all potions un-ordered
             stmt = (
                 select(
                     potions.c.sku,
@@ -99,11 +97,31 @@ def get_catalog():
                 .group_by(
                     potions.c.id
                 )
-                .having(
+            )
+            all_potions = []
+            result = conn.execute(stmt.order_by("quantity", potions.c.id))
+            for potion in result:
+                all_available_potions.append(Potion(
+                        sku=potion.sku, 
+                        price=potion.price,
+                        name=potion.name,
+                        red=potion.red,
+                        green=potion.green,
+                        blue=potion.blue,
+                        dark=potion.dark,
+                        quantity=potion.quantity
+                    ))
+            # Figure out what is expected to be bottled
+            inv = get_global_inventory(conn)
+            bottle_plan = make_bottle_plan(inv, all_potions)
+            # Going forward only get potions that are in stock
+            stmt.having(
                     func.coalesce(func.sum(potion_quantities.c.delta), 0) > 0
                 )
-            )
+            # in Phase two or above
             if SHOP_PHASE >= PHASE_TWO:
+                # Get the day of the week
+                day_of_week = int(conn.execute(select(extract("DOW", func.current_timestamp()))).scalar_one())
                 # Exclude certain potions based on the day
                 exclusions = list_exclusions(day_of_week)
                 if len(exclusions) > 0:
@@ -114,6 +132,7 @@ def get_catalog():
                             )
                         )
                     )
+            # Get all potions in stock
             all_available_potions = []
             result = conn.execute(stmt.order_by("quantity", potions.c.id))
             for potion in result:
@@ -127,10 +146,11 @@ def get_catalog():
                         dark=potion.dark,
                         quantity=potion.quantity
                     ))
+            # Start forming the Catalog
+            catalog = []
+            catalog_size = 0
+            # Start by adding the best sellers (if they are available)
             catalog_size += add_best_sellers(catalog, all_available_potions)
-            # Figure out what is expected to be bottled
-            inv = get_global_inventory(conn)
-            bottle_plan = make_bottle_plan(inv, all_available_potions)
             # make sure that no duplicates can be returned by susequent queries
             stmt = (
                 stmt.where(
