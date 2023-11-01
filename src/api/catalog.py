@@ -38,16 +38,7 @@ def add_best_sellers(catalog: list[Potion], potions):
     num_added = 0
     for potion in potions:
         if potion.sku in BEST_SELLERS and potion.sku not in [potion.sku for potion in catalog]:
-            catalog.append(Potion(
-                    sku=potion.sku, 
-                    price=potion.price,
-                    name=potion.name,
-                    red=potion.red,
-                    green=potion.green,
-                    blue=potion.blue,
-                    dark=potion.dark,
-                    quantity=potion.quantity
-                ))
+            catalog.append(potion)
             num_added += 1
     return num_added
 
@@ -123,8 +114,23 @@ def get_catalog():
                             )
                         )
                     )
-            all_available_potions = conn.execute(stmt.order_by("quantity", potions.c.id))
+            all_available_potions = []
+            result = conn.execute(stmt.order_by("quantity", potions.c.id))
+            for potion in result:
+                all_available_potions.append(Potion(
+                        sku=potion.sku, 
+                        price=potion.price,
+                        name=potion.name,
+                        red=potion.red,
+                        green=potion.green,
+                        blue=potion.blue,
+                        dark=potion.dark,
+                        quantity=potion.quantity
+                    ))
             catalog_size += add_best_sellers(catalog, all_available_potions)
+            # Figure out what is expected to be bottled
+            inv = get_global_inventory(conn)
+            bottle_plan = make_bottle_plan(inv, all_available_potions)
             # make sure that no duplicates can be returned by susequent queries
             stmt = (
                 stmt.where(
@@ -154,9 +160,6 @@ def get_catalog():
                         dark=potion.dark,
                         quantity=potion.quantity
                     ))
-            # Figure out what is expected to be bottled
-            inv = get_global_inventory(conn)
-            bottle_plan = make_bottle_plan(inv, catalog)
             # Increase quantity in catalog if expected to bottle more
             for potion in bottle_plan:
                 for item in catalog:
