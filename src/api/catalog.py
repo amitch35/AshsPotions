@@ -167,7 +167,7 @@ def get_catalog():
             print("Ash's Catalog:")
             catalog_json = []
             for potion in catalog:
-                print(f"{potion.name}: {potion.quantity}")
+                print(f"{potion.name}: {potion.quantity} at {potion.price}")
                 catalog_json.append({
                             "sku": potion.sku,
                             "name": potion.name,
