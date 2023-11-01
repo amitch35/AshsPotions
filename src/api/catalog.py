@@ -38,7 +38,16 @@ def add_best_sellers(catalog: list[Potion], potions):
     num_added = 0
     for potion in potions:
         if potion.sku in BEST_SELLERS and potion.sku not in [potion.sku for potion in catalog]:
-            catalog.append(potion)
+            catalog.append(Potion(
+                    sku=potion.sku, 
+                    price=potion.price,
+                    name=potion.name,
+                    red=potion.red,
+                    green=potion.green,
+                    blue=potion.blue,
+                    dark=potion.dark,
+                    quantity=potion.quantity
+                ))
             num_added += 1
     return num_added
 
@@ -135,11 +144,7 @@ def get_catalog():
                 )
                 result = conn.execute(stmt)
                 for potion in result:
-                    catalog.append(potion)
-            # Convert from Cursors to list of Potions
-            pot_catalog = []
-            for potion in catalog:
-                pot_catalog.append(Potion(
+                    catalog.append(Potion(
                         sku=potion.sku, 
                         price=potion.price,
                         name=potion.name,
@@ -151,17 +156,17 @@ def get_catalog():
                     ))
             # Figure out what is expected to be bottled
             inv = get_global_inventory(conn)
-            bottle_plan = make_bottle_plan(inv, pot_catalog)
+            bottle_plan = make_bottle_plan(inv, catalog)
             # Increase quantity in catalog if expected to bottle more
             for potion in bottle_plan:
-                for item in pot_catalog:
+                for item in catalog:
                     if potion.name == item.name:
                         item.quantity += (potion.quantity - 1)
                         break  # Break out of the inner loop after finding a match
 
             print("Ash's Catalog:")
             catalog_json = []
-            for potion in pot_catalog:
+            for potion in catalog:
                 print(f"{potion.name}: {potion.quantity}")
                 catalog_json.append({
                             "sku": potion.sku,
