@@ -74,11 +74,12 @@ def get_catalog():
     Each unique item combination must have only a single price.
     Implements best sellers and time based offerings before randomly offering others
     """
-    is_left_join = False
+
     # Can return a max of 6 items.
     print("----Catalog----")
     try:
         with db.engine.begin() as conn:
+            is_left_join = False
             # Get all potions un-ordered
             stmt = (
                 select(
