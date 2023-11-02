@@ -74,7 +74,7 @@ def get_catalog():
     Each unique item combination must have only a single price.
     Implements best sellers and time based offerings before randomly offering others
     """
-
+    is_left_join = False
     # Can return a max of 6 items.
     print("----Catalog----")
     try:
@@ -92,13 +92,14 @@ def get_catalog():
                     func.coalesce(func.sum(potion_quantities.c.delta), 0).label("quantity")
                 )
                 .select_from(
-                    join(potions, potion_quantities, potions.c.id == potion_quantities.c.potion_id)
+                    join(potions, potion_quantities, potions.c.id == potion_quantities.c.potion_id, isouter=is_left_join)
                 )
                 .group_by(
                     potions.c.id
                 )
             )
             all_potions = []
+            is_left_join = True
             result = conn.execute(stmt.order_by("quantity", potions.c.id))
             for potion in result:
                 all_potions.append(Potion(
@@ -111,6 +112,7 @@ def get_catalog():
                         dark=potion.dark,
                         quantity=potion.quantity
                     ))
+            is_left_join = False
             # Figure out what is expected to be bottled
             inv = get_global_inventory(conn)
             bottle_plan = make_bottle_plan(inv, all_potions)
