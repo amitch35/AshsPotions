@@ -79,7 +79,6 @@ def get_catalog():
     print("----Catalog----")
     try:
         with db.engine.begin() as conn:
-            is_left_join = False
             # Get all potions un-ordered
             stmt = (
                 select(
@@ -92,16 +91,19 @@ def get_catalog():
                     potions.c.dark,
                     func.coalesce(func.sum(potion_quantities.c.delta), 0).label("quantity")
                 )
+            )
+            # Get all potions using left join with potion_quantities for qty
+            all_potions = []
+            all_stmt = (stmt
                 .select_from(
-                    join(potions, potion_quantities, potions.c.id == potion_quantities.c.potion_id, isouter=is_left_join)
+                    join(potions, potion_quantities, potions.c.id == potion_quantities.c.potion_id, isouter=True)
                 )
                 .group_by(
                     potions.c.id
                 )
+                .order_by("quantity", potions.c.id)
             )
-            all_potions = []
-            is_left_join = True
-            result = conn.execute(stmt.order_by("quantity", potions.c.id))
+            result = conn.execute(all_stmt)
             for potion in result:
                 all_potions.append(Potion(
                         sku=potion.sku, 
@@ -113,14 +115,23 @@ def get_catalog():
                         dark=potion.dark,
                         quantity=potion.quantity
                     ))
-            is_left_join = False
+            
+            # Normal join on potion quantities --> going forward only get potions that are in stock
+            stmt = (stmt
+                .select_from(
+                    join(potions, potion_quantities, potions.c.id == potion_quantities.c.potion_id)
+                )
+                .group_by(
+                    potions.c.id
+                )
+                .having(
+                    func.coalesce(func.sum(potion_quantities.c.delta), 0) > 0
+                )
+            )
+
             # Figure out what is expected to be bottled
             inv = get_global_inventory(conn)
             bottle_plan = make_bottle_plan(inv, all_potions)
-            # Going forward only get potions that are in stock
-            stmt.having(
-                    func.coalesce(func.sum(potion_quantities.c.delta), 0) > 0
-                )
             # in Phase two or above
             if SHOP_PHASE >= PHASE_TWO:
                 # Get the day of the week
