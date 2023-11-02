@@ -236,7 +236,7 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions):
                 print(item)
             return ({ "sku": bar.sku, "quantity": bar.quantity, } for bar in barrel_plan)
         else:
-            if SHOP_PHASE == PHASE_TWO:
+            if SHOP_PHASE >= PHASE_THREE:
                 print("No Large barrels offered from wholesale")
             else:
                 print("Could not afford any barrels or none available")
