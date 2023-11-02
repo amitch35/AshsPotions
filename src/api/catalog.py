@@ -79,7 +79,7 @@ def get_catalog():
     print("----Catalog----")
     try:
         with db.engine.begin() as conn:
-            # Get all potions un-ordered
+            # Define how to describe potions from all queries below
             stmt = (
                 select(
                     potions.c.sku,
@@ -92,7 +92,7 @@ def get_catalog():
                     func.coalesce(func.sum(potion_quantities.c.delta), 0).label("quantity")
                 )
             )
-            # Get all potions using left join with potion_quantities for qty
+            # Get all potions un-ordered using left join with potion_quantities for qty
             all_potions = []
             all_stmt = (stmt
                 .select_from(
