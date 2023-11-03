@@ -14,7 +14,7 @@ PHASE_ONE = 1   # Getting started, growth and aquiring customers
 PHASE_TWO = 2   # Optimizing potion offerings
 PHASE_THREE = 3 # Optimizing Barrel Purchases
 PHASE_FOUR = 4  # Stop buying barrels
-SHOP_PHASE = PHASE_TWO
+SHOP_PHASE = PHASE_ONE
 
 BEST_SELLERS = ["red_potion", "green_potion"] # river_bed_potion
 
