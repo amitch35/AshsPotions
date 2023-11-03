@@ -16,7 +16,7 @@ PHASE_THREE = 3 # Optimizing Barrel Purchases
 PHASE_FOUR = 4  # Stop buying barrels
 SHOP_PHASE = PHASE_TWO
 
-BEST_SELLERS = ["red_potion", "green_potion", "river_bed_potion"]
+BEST_SELLERS = ["red_potion", "green_potion"] # river_bed_potion
 
 CATALOG_MAX = 6
 
