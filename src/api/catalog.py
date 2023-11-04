@@ -62,7 +62,7 @@ def list_exclusions(day_of_week):
             exclude = []
         case DayOfWeek.FRIDAY:
             print("Today is Friday.")
-            exclude = ["purple_potion"]
+            exclude = ["purple_potion", "orange_potion"]
         case DayOfWeek.SATURDAY:
             print("Today is Saturday.")
             exclude = ["purple_potion"]
