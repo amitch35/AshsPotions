@@ -3,6 +3,7 @@ from enum import IntEnum
 from pydantic import BaseModel
 from src.api import auth
 from src.api.audit import get_global_inventory
+from src.api.catalog import CATALOG_MAX
 import sqlalchemy
 from sqlalchemy.exc import DBAPIError
 from src import database as db
@@ -14,7 +15,7 @@ class Color(IntEnum):
     DARK = 3
     BLANK = 4
 
-NUM_POTION_MIXES = 7
+NUM_POTION_MIXES = CATALOG_MAX
 MAX_BOTTLE_SLOTS = 300
 BOTTLE_THRESHOLD = MAX_BOTTLE_SLOTS // NUM_POTION_MIXES
 MAX_BOTTLE_NUM = 99999
