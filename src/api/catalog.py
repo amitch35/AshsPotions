@@ -1,6 +1,4 @@
 from fastapi import APIRouter
-from enum import IntEnum
-from pydantic import BaseModel
 import sqlalchemy
 from sqlalchemy import *
 from sqlalchemy.exc import DBAPIError
@@ -25,48 +23,6 @@ metadata_obj = sqlalchemy.MetaData()
 potions = sqlalchemy.Table("potions", metadata_obj, autoload_with=db.engine)
 potion_quantities = sqlalchemy.Table("potion_quantities", metadata_obj, autoload_with=db.engine)
 
-class DayOfWeek(IntEnum):
-    SUNDAY = 0
-    MONDAY = 1
-    TUESDAY = 2
-    WEDNESDAY = 3
-    THURSDAY = 4
-    FRIDAY = 5
-    SATURDAY = 6
-
-def add_best_sellers(catalog: list[Potion], potions):
-    num_added = 0
-    for potion in potions:
-        if potion.sku in BEST_SELLERS and potion.sku not in [potion.sku for potion in catalog]:
-            catalog.append(potion)
-            num_added += 1
-    return num_added
-
-def list_exclusions(day_of_week):
-    # Some potions don't sell well on certain days of the week
-    match day_of_week:
-        case DayOfWeek.SUNDAY:
-            print("Today is Sunday.")
-            exclude = ["red_potion", "rusty_potion"]
-        case DayOfWeek.MONDAY:
-            print("Today is Monday.")
-            exclude = ["blue_potion", "green_potion"]
-        case DayOfWeek.TUESDAY:
-            print("Today is Tuesday.")
-            exclude = []
-        case DayOfWeek.WEDNESDAY:
-            print("Today is Wednesday.")
-            exclude = []
-        case DayOfWeek.THURSDAY:
-            print("Today is Thursday.")
-            exclude = []
-        case DayOfWeek.FRIDAY:
-            print("Today is Friday.")
-            exclude = ["purple_potion", "orange_potion"]
-        case DayOfWeek.SATURDAY:
-            print("Today is Saturday.")
-            exclude = ["purple_potion"]
-    return exclude
 
 @router.get("/catalog/", tags=["catalog"])
 def get_catalog():
@@ -104,6 +60,8 @@ def get_catalog():
                 .order_by("quantity", potions.c.id)
             )
             result = conn.execute(all_stmt)
+
+            # Build a list of all potions
             for potion in result:
                 all_potions.append(Potion(
                         sku=potion.sku, 
@@ -116,6 +74,10 @@ def get_catalog():
                         quantity=potion.quantity
                     ))
             
+            # Figure out what is expected to be bottled
+            inv = get_global_inventory(conn)
+            bottle_plan = make_bottle_plan(inv, all_potions)
+            
             # Normal join on potion quantities --> going forward only get potions that are in stock
             stmt = (stmt
                 .select_from(
@@ -127,25 +89,9 @@ def get_catalog():
                 .having(
                     func.coalesce(func.sum(potion_quantities.c.delta), 0) > 0
                 )
+                .order_by("quantity", potions.c.id) # order same as above to speed up nested loop below
             )
 
-            # Figure out what is expected to be bottled
-            inv = get_global_inventory(conn)
-            bottle_plan = make_bottle_plan(inv, all_potions)
-            # in Phase two or above
-            if SHOP_PHASE >= PHASE_TWO:
-                # Get the day of the week
-                day_of_week = int(conn.execute(select(extract("DOW", func.current_timestamp()))).scalar_one())
-                # Exclude certain potions based on the day
-                exclusions = list_exclusions(day_of_week)
-                if len(exclusions) > 0:
-                    stmt = (
-                        stmt.where(
-                            and_(
-                                not_(potions.c.sku.in_(exclusions))
-                            )
-                        )
-                    )
             # Get all potions in stock
             all_available_potions = []
             result = conn.execute(stmt.order_by("quantity", potions.c.id))
@@ -160,46 +106,22 @@ def get_catalog():
                         dark=potion.dark,
                         quantity=potion.quantity
                     ))
-            # Start forming the Catalog
+        
+            # Catalog is generated selling potions with highest quantity
             catalog = []
-            catalog_size = 0
-            # Start by adding the best sellers (if they are available)
-            catalog_size += add_best_sellers(catalog, all_available_potions)
-            # make sure that no duplicates can be returned by susequent queries
-            stmt = (
-                stmt.where(
-                    and_(
-                        not_(potions.c.sku.in_([potion.sku for potion in catalog]))
-                    )
-                )
-            )
-            # remaining catalog is generated randomly
-            num_needed = CATALOG_MAX - catalog_size
-            if num_needed > 0:
-                stmt = (
-                    stmt.order_by(
-                        text("RANDOM()")
-                    )
-                    .limit(num_needed)
-                )
-                result = conn.execute(stmt)
-                for potion in result:
-                    catalog.append(Potion(
-                        sku=potion.sku, 
-                        price=potion.price,
-                        name=potion.name,
-                        red=potion.red,
-                        green=potion.green,
-                        blue=potion.blue,
-                        dark=potion.dark,
-                        quantity=potion.quantity
-                    ))
-            # Increase quantity in catalog if expected to bottle more
+            # Increase quantity in available potions if expected to bottle more
             for potion in bottle_plan:
-                for item in catalog:
+                for item in all_available_potions:
                     if potion.name == item.name:
                         item.quantity += (potion.quantity - 1)
                         break  # Break out of the inner loop after finding a match
+            # sort available potions by quantity (highest first)
+            all_available_potions.sort(key=lambda potion: potion.quantity, reverse=True)
+            # add highest quantity potions to catalog
+            for potion in all_available_potions:
+                catalog.append(potion)
+                if len(catalog) == CATALOG_MAX:
+                    break
 
             print("Ash's Catalog:")
             catalog_json = []
