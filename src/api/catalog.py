@@ -35,7 +35,7 @@ def get_catalog():
     print("----Catalog----")
     try:
         with db.engine.begin() as conn:
-            # Define how to describe potions from all queries below
+            # Define how to describe potions
             stmt = (
                 select(
                     potions.c.sku,
@@ -77,48 +77,19 @@ def get_catalog():
             # Figure out what is expected to be bottled
             inv = get_global_inventory(conn)
             bottle_plan = make_bottle_plan(inv, all_potions)
-            
-            # Normal join on potion quantities --> going forward only get potions that are in stock
-            stmt = (stmt
-                .select_from(
-                    join(potions, potion_quantities, potions.c.id == potion_quantities.c.potion_id)
-                )
-                .group_by(
-                    potions.c.id
-                )
-                .having(
-                    func.coalesce(func.sum(potion_quantities.c.delta), 0) > 0
-                )
-                .order_by("quantity", potions.c.id) # order same as above to speed up nested loop below
-            )
-
-            # Get all potions in stock
-            all_available_potions = []
-            result = conn.execute(stmt.order_by("quantity", potions.c.id))
-            for potion in result:
-                all_available_potions.append(Potion(
-                        sku=potion.sku, 
-                        price=potion.price,
-                        name=potion.name,
-                        red=potion.red,
-                        green=potion.green,
-                        blue=potion.blue,
-                        dark=potion.dark,
-                        quantity=potion.quantity
-                    ))
         
             # Catalog is generated selling potions with highest quantity
             catalog = []
             # Increase quantity in available potions if expected to bottle more
             for potion in bottle_plan:
-                for item in all_available_potions:
+                for item in all_potions:
                     if potion.name == item.name:
                         item.quantity += (potion.quantity - 1)
                         break  # Break out of the inner loop after finding a match
             # sort available potions by quantity (highest first)
-            all_available_potions.sort(key=lambda potion: potion.quantity, reverse=True)
+            all_potions.sort(key=lambda potion: potion.quantity, reverse=True)
             # add highest quantity potions to catalog
-            for potion in all_available_potions:
+            for potion in all_potions:
                 catalog.append(potion)
                 if len(catalog) == CATALOG_MAX:
                     break
