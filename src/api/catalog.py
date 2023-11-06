@@ -54,7 +54,7 @@ def add_recent_sellers(catalog: list[Potion], potions, shop_state, conn):
         JOIN potions ON cart_contents.potion_id = potions.id
         WHERE cart_contents.created_at >= now() - interval '{shop_state.recents_interval} hours'
         GROUP BY potions.name, cart_contents.potion_id
-        ORDER BY num_requested
+        ORDER BY num_requested desc
     """
     recents = []
     result = conn.execute(sqlalchemy.text(sql))
