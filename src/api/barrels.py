@@ -17,7 +17,8 @@ if SHOP_PHASE == PHASE_ONE or SHOP_PHASE == PHASE_TWO:
     ML_THRESHOLD = 8000
 elif SHOP_PHASE == PHASE_THREE: # Est. 33,000 ml mixed per day will check agin
     PURCHASE_MAX = 23
-    ML_THRESHOLD = 201000
+    ML_THRESHOLD = 30000
+DARK_ML_THRESHOLD = 201000
 DARK_PURCHASE_MAX = 24
 NUM_COLORS = 4
 
@@ -147,7 +148,7 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions):
                 priority = [color for color in priority if color != Color.BLUE]
                 options = remove_all("BLUE", options)
                 print(f"Alread have enough blue ml: {inv.num_blue_ml}")
-            if inv.num_dark_ml > ML_THRESHOLD:
+            if inv.num_dark_ml > DARK_ML_THRESHOLD:
                 priority = [color for color in priority if color != Color.DARK]
                 options = remove_all("DARK", options)
                 print(f"Alread have enough dark ml: {inv.num_dark_ml}")
