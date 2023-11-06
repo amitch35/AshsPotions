@@ -234,7 +234,7 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions, shop_phase):
                     #TEST:print(f"Remaining Gold: {gold}")
                     options = list_viable(gold, options) # check what options remain with current gold
             else:
-                print(f"Current inventory sufficient, all ml types above {ml_THRESHOLD}")
+                print(f"Current inventory sufficient, all ml types above {ml_THRESHOLD} ({DARK_ML_THRESHOLD} for dark)")
             plan_list = [f"sku: {bar.sku}, quantity: {bar.quantity}" for bar in barrel_plan]
             for item in plan_list:
                 print(item)
