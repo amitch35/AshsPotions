@@ -16,7 +16,7 @@ PHASE_THREE = 3 # Optimizing Barrel Purchases
 PHASE_FOUR = 4  # Stop buying barrels
 SHOP_PHASE = PHASE_THREE
 
-BEST_SELLERS = ["red_potion", "green_potion"] 
+RECENTS_THRESHOLD = 9 # If more than 9 potions sold last tick sell again
 
 CATALOG_MAX = 6
 
@@ -34,12 +34,35 @@ class DayOfWeek(IntEnum):
     FRIDAY = 5
     SATURDAY = 6
 
-def add_best_sellers(catalog: list[Potion], potions):
+def add_recent_sellers(catalog: list[Potion], potions, conn):
+    sql = """
+        SELECT potions.name as potion, potion_id, sum(quantity_requested) as num_requested
+        FROM cart_contents
+        JOIN potions ON cart_contents.potion_id = potions.id
+        WHERE cart_contents.created_at >= now() - interval '2 hours'
+        GROUP BY potions.name, cart_contents.potion_id
+        ORDER BY num_requested
+    """
+    recents = []
+    result = conn.execute(sql)
+    for potion in result:
+        recents.append(Potion(
+                sku=potion.sku, 
+                price=potion.price,
+                name=potion.name,
+                red=potion.red,
+                green=potion.green,
+                blue=potion.blue,
+                dark=potion.dark,
+                quantity=potion.quantity
+            ))
     num_added = 0
-    for potion in potions:
-        if potion.sku in BEST_SELLERS and potion.sku not in [potion.sku for potion in catalog]:
-            catalog.append(potion)
-            num_added += 1
+    for item in recents:
+        for potion in potions:
+            if potion.name == item.name and item.num_requested > RECENTS_THRESHOLD:
+                catalog.append(potion)
+                num_added += 1
+                break  # Break out of the inner loop after finding a match
     return num_added
 
 def list_exclusions(day_of_week):
@@ -164,7 +187,7 @@ def get_catalog():
             catalog = []
             catalog_size = 0
             # Start by adding the best sellers (if they are available)
-            catalog_size += add_best_sellers(catalog, all_available_potions)
+            catalog_size += add_recent_sellers(catalog, all_available_potions, conn)
             # make sure that no duplicates can be returned by susequent queries
             stmt = (
                 stmt.where(
