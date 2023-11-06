@@ -23,12 +23,15 @@ CATALOG_MAX = 6
 class ShopState(BaseModel):
     phase: int
     recents_threshold: int
+    recents_interval: int
 
 def get_shop_state(connection):
-    sql = """SELECT phase, recents_threshold FROM shop_state """
+    sql = """SELECT phase, recents_threshold, recents_interval FROM shop_state """
     result = connection.execute(sqlalchemy.text(sql))
     state =  result.first() # Shop state is on a single row
-    return ShopState(phase=state.phase, recents_threshold=state.recents_threshold)
+    return ShopState(phase=state.phase, 
+                    recents_threshold=state.recents_threshold,
+                    recents_interval=state.recents_interval)
 
 # Use reflection to derive table schema. You can also code this in manually.
 metadata_obj = sqlalchemy.MetaData()
@@ -45,11 +48,11 @@ class DayOfWeek(IntEnum):
     SATURDAY = 6
 
 def add_recent_sellers(catalog: list[Potion], potions, shop_state, conn):
-    sql = """
+    sql = f"""
         SELECT potions.name as potion, potion_id, sum(quantity_requested) as num_requested
         FROM cart_contents
         JOIN potions ON cart_contents.potion_id = potions.id
-        WHERE cart_contents.created_at >= now() - interval '2 hours'
+        WHERE cart_contents.created_at >= now() - interval '{shop_state.recents_interval} hours'
         GROUP BY potions.name, cart_contents.potion_id
         ORDER BY num_requested
     """
