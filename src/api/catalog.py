@@ -136,12 +136,12 @@ def get_catalog():
 
             # Figure out what is expected to be bottled
             inv = get_global_inventory(conn)
-            bottle_plan = make_bottle_plan(inv, all_potions)
+            exclusions = list_exclusions(conn)
+            bottle_plan = make_bottle_plan(inv, potions, exclusions)
             shop_state = get_shop_state(conn)
             # in Phase two or above
             if shop_state.phase >= PHASE_TWO:
                 # Exclude certain potions based on the day
-                exclusions = list_exclusions(conn)
                 if len(exclusions) > 0:
                     stmt = (
                         stmt.where(
