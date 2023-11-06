@@ -72,10 +72,13 @@ def add_recent_sellers(catalog: list[Potion], potions, shop_state, conn):
     num_added = 0
     for item in recents:
         for potion in potions:
-            if potion.name == item.name and item.num_requested > shop_state.recents_threshold:
-                catalog.append(potion)
-                num_added += 1
-                break  # Break out of the inner loop after finding a match
+            if num_added < CATALOG_MAX:
+                if potion.name == item.name and item.num_requested > shop_state.recents_threshold:
+                    catalog.append(potion)
+                    num_added += 1
+                    break  # Break out of the inner loop after finding a match
+            else:
+                break
     return num_added
 
 def list_exclusions(day_of_week):
