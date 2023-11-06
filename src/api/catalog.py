@@ -14,7 +14,6 @@ PHASE_ONE = 1   # Getting started, growth and aquiring customers
 PHASE_TWO = 2   # Optimizing potion offerings
 PHASE_THREE = 3 # Optimizing Barrel Purchases
 PHASE_FOUR = 4  # Stop buying barrels
-SHOP_PHASE = PHASE_THREE
 
 RECENTS_THRESHOLD = 9 # If more than 9 potions sold last tick sell again
 
