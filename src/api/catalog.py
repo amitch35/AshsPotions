@@ -59,11 +59,9 @@ def add_recent_sellers(catalog: list[Potion], potions, shop_state, conn):
                 potion_id=item.potion_id,
                 num_requested=item.num_requested
             ))
-    for item in recents:
-        print(f"Sku: {item.name}, Sold: {item.num_requested}")
     num_added = 0
     for item in recents:
-        if num_added < CATALOG_MAX:
+        if num_added == CATALOG_MAX:
             for potion in potions:
                 if potion.name == item.name and item.num_requested > shop_state.recents_threshold:
                     catalog.append(potion)
