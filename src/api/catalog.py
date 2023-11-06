@@ -81,31 +81,18 @@ def add_recent_sellers(catalog: list[Potion], potions, shop_state, conn):
                 break
     return num_added
 
-def list_exclusions(day_of_week):
+def list_exclusions(conn):
     # Some potions don't sell well on certain days of the week
-    match day_of_week:
-        case DayOfWeek.SUNDAY:
-            print("Today is Sunday.")
-            exclude = ["red_potion", "rusty_potion"]
-        case DayOfWeek.MONDAY:
-            print("Today is Monday.")
-            exclude = ["blue_potion", "green_potion"]
-        case DayOfWeek.TUESDAY:
-            print("Today is Tuesday.")
-            exclude = []
-        case DayOfWeek.WEDNESDAY:
-            print("Today is Wednesday.")
-            exclude = []
-        case DayOfWeek.THURSDAY:
-            print("Today is Thursday.")
-            exclude = []
-        case DayOfWeek.FRIDAY:
-            print("Today is Friday.")
-            exclude = ["purple_potion", "orange_potion"]
-        case DayOfWeek.SATURDAY:
-            print("Today is Saturday.")
-            exclude = ["purple_potion"]
-    return exclude
+    sql = """
+        SELECT sku 
+        FROM exclusions
+        WHERE day = extract(DOW from CURRENT_TIMESTAMP) 
+    """
+    exclusions = []
+    result = conn.execute(sqlalchemy.text(sql))
+    for sku in result:
+        exclusions.append(sku)
+    return exclusions
 
 @router.get("/catalog/", tags=["catalog"])
 def get_catalog():
@@ -174,10 +161,8 @@ def get_catalog():
             shop_state = get_shop_state(conn)
             # in Phase two or above
             if shop_state.phase >= PHASE_TWO:
-                # Get the day of the week
-                day_of_week = int(conn.execute(select(extract("DOW", func.current_timestamp()))).scalar_one())
                 # Exclude certain potions based on the day
-                exclusions = list_exclusions(day_of_week)
+                exclusions = list_exclusions(conn)
                 if len(exclusions) > 0:
                     stmt = (
                         stmt.where(
