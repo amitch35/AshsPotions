@@ -37,14 +37,10 @@ metadata_obj = sqlalchemy.MetaData()
 potions = sqlalchemy.Table("potions", metadata_obj, autoload_with=db.engine)
 potion_quantities = sqlalchemy.Table("potion_quantities", metadata_obj, autoload_with=db.engine)
 
-class DayOfWeek(IntEnum):
-    SUNDAY = 0
-    MONDAY = 1
-    TUESDAY = 2
-    WEDNESDAY = 3
-    THURSDAY = 4
-    FRIDAY = 5
-    SATURDAY = 6
+class RecentPotion(BaseModel):
+    name: str
+    potion_id: int 
+    num_requested: int
 
 def add_recent_sellers(catalog: list[Potion], potions, shop_state, conn):
     sql = f"""
@@ -57,27 +53,22 @@ def add_recent_sellers(catalog: list[Potion], potions, shop_state, conn):
     """
     recents = []
     result = conn.execute(sqlalchemy.text(sql))
-    for potion in result:
-        recents.append(Potion(
-                sku=potion.sku, 
-                price=potion.price,
-                name=potion.name,
-                red=potion.red,
-                green=potion.green,
-                blue=potion.blue,
-                dark=potion.dark,
-                quantity=potion.quantity
+    for item in result:
+        recents.append(RecentPotion(
+                name=item.name,
+                potion_id=item.potion_id,
+                num_requested=item.num_requested
             ))
     num_added = 0
     for item in recents:
-        for potion in potions:
-            if num_added < CATALOG_MAX:
+        if num_added < CATALOG_MAX:
+            for potion in potions:
                 if potion.name == item.name and item.num_requested > shop_state.recents_threshold:
                     catalog.append(potion)
                     num_added += 1
                     break  # Break out of the inner loop after finding a match
-            else:
-                break
+        else:
+            break
     return num_added
 
 def list_exclusions(conn):
