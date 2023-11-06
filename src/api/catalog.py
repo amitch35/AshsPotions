@@ -5,7 +5,7 @@ import sqlalchemy
 from sqlalchemy import *
 from sqlalchemy.exc import DBAPIError
 from src import database as db
-from src.api.bottler import make_bottle_plan, Potion
+from src.api.bottler import make_bottle_plan, list_exclusions, Potion
 from src.api.audit import get_global_inventory
 
 router = APIRouter()
@@ -59,6 +59,8 @@ def add_recent_sellers(catalog: list[Potion], potions, shop_state, conn):
                 potion_id=item.potion_id,
                 num_requested=item.num_requested
             ))
+    for item in recents:
+        print(f"Sku: {item.name}, Sold: {item.num_requested}")
     num_added = 0
     for item in recents:
         if num_added < CATALOG_MAX:
@@ -70,19 +72,6 @@ def add_recent_sellers(catalog: list[Potion], potions, shop_state, conn):
         else:
             break
     return num_added
-
-def list_exclusions(conn):
-    # Some potions don't sell well on certain days of the week
-    sql = """
-        SELECT sku 
-        FROM exclusions
-        WHERE day = extract(DOW from CURRENT_TIMESTAMP) 
-    """
-    exclusions = []
-    result = conn.execute(sqlalchemy.text(sql))
-    for row in result:
-        exclusions.append(row.sku)
-    return exclusions
 
 @router.get("/catalog/", tags=["catalog"])
 def get_catalog():

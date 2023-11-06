@@ -25,6 +25,19 @@ router = APIRouter(
     dependencies=[Depends(auth.get_api_key)],
 )
 
+def list_exclusions(conn):
+    # Some potions don't sell well on certain days of the week
+    sql = """
+        SELECT sku 
+        FROM exclusions
+        WHERE day = extract(DOW from CURRENT_TIMESTAMP) 
+    """
+    exclusions = []
+    result = conn.execute(sqlalchemy.text(sql))
+    for row in result:
+        exclusions.append(row.sku)
+    return exclusions
+
 class PotionInventory(BaseModel):
     potion_type: list[int]
     quantity: int
@@ -83,7 +96,7 @@ class Potion(BaseModel):
     dark: int
     quantity: int
     
-def make_bottle_plan(inv, potions):
+def make_bottle_plan(inv, potions, exclusions):
     bottle_plan = []
     inv_red = inv.num_red_ml
     inv_green = inv.num_green_ml
@@ -92,7 +105,7 @@ def make_bottle_plan(inv, potions):
     # make it so never goes above max of 300 
     slots_available = MAX_BOTTLE_SLOTS - inv.num_potions
     for potion in potions:
-        if potion.quantity < BOTTLE_THRESHOLD:
+        if potion.quantity < BOTTLE_THRESHOLD and potion.sku not in exclusions:
             if potion.red > 0:
                 red_ok = (inv_red // potion.red)
             else:
@@ -163,7 +176,7 @@ def get_bottle_plan():
         with db.engine.begin() as connection:
             inv = get_global_inventory(connection)
             # Order potions by quantity (include name, quantity and ml mix info)
-            sql = ("SELECT potions.name, "
+            sql = ("SELECT potions.sku, potions.name, "
                         "potions.red, potions.green, potions.blue, potions.dark, "
                         "COALESCE(SUM(potion_quantities.delta), 0) AS quantity "
                     "FROM potions "
@@ -172,7 +185,8 @@ def get_bottle_plan():
                     "GROUP BY potions.id "
                     "ORDER BY quantity, potions.id; ")
             potions = connection.execute(sqlalchemy.text(sql))
-            bottle_plan = make_bottle_plan(inv, potions)
+            exclusions = list_exclusions(connection)
+            bottle_plan = make_bottle_plan(inv, potions, exclusions)
             bottle_plan_json = []
             for potion in bottle_plan:
                 bottle_plan_json.append({
