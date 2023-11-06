@@ -5,19 +5,9 @@ import sqlalchemy
 from sqlalchemy.exc import DBAPIError
 from src import database as db
 from src.api.bottler import Color, MAX_BOTTLE_SLOTS
-from src.api.catalog import SHOP_PHASE, PHASE_ONE, PHASE_TWO, PHASE_THREE, PHASE_FOUR
+from src.api.catalog import PHASE_TWO, PHASE_THREE, PHASE_FOUR, get_shop_state
 import copy
 
-if SHOP_PHASE >= PHASE_FOUR:
-    PURCHASE_THRESHOLD = 0
-else:
-    PURCHASE_THRESHOLD = MAX_BOTTLE_SLOTS
-if SHOP_PHASE == PHASE_ONE or SHOP_PHASE == PHASE_TWO:
-    PURCHASE_MAX = 10 # 4
-    ML_THRESHOLD = 8000
-elif SHOP_PHASE == PHASE_THREE: # Est. 33,000 ml mixed per day will check agin
-    PURCHASE_MAX = 23
-    ML_THRESHOLD = 30000
 LARGE_NUM_ML = 10000
 DARK_ML_THRESHOLD = 201000
 DARK_ML_GOAL = 230000
@@ -123,14 +113,24 @@ def post_deliver_barrels(barrels_delivered: list[Barrel]):
     else:
         return "Nothing Delivered"
     
-def make_barrel_plan(wholesale_catalog, inv, potions, num_potions):
-    if num_potions < PURCHASE_THRESHOLD:
+def make_barrel_plan(wholesale_catalog, inv, potions, num_potions, shop_phase):
+    if shop_phase >= PHASE_FOUR:
+        purchase_THRESHOLD = 0
+    else:
+        purchase_THRESHOLD = MAX_BOTTLE_SLOTS
+    if shop_phase <= PHASE_TWO:
+        purchase_MAX = 10 # 4
+        ml_THRESHOLD = 8000
+    elif shop_phase == PHASE_THREE: # Est. 33,000 ml mixed per day will check agin
+        purchase_MAX = 23
+        ml_THRESHOLD = 30000
+    if num_potions < purchase_THRESHOLD:
         barrel_plan = []
         gold = inv.gold
         print(f"Available Gold: {gold}")
         options = copy.deepcopy(wholesale_catalog)
         options = list_viable(gold, options) # check afford and quantity in catalog
-        if SHOP_PHASE >= PHASE_THREE:
+        if shop_phase >= PHASE_THREE:
             options = remove_all("MINI", options)
             options = remove_all("SMALL", options)
             options = remove_all("MEDIUM", options)
@@ -138,15 +138,15 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions):
             priority = list_priority(potions)
             print(f"Priority list: {priority}")
             print(f"Red = {Color.RED}, Green = {Color.GREEN}, Blue = {Color.BLUE}, Dark = {Color.DARK}")
-            if inv.num_red_ml > ML_THRESHOLD:
+            if inv.num_red_ml > ml_THRESHOLD:
                 priority = [color for color in priority if color != Color.RED]
                 options = remove_all("RED", options)
                 print(f"Alread have enough red ml: {inv.num_red_ml}")
-            if inv.num_green_ml > ML_THRESHOLD:
+            if inv.num_green_ml > ml_THRESHOLD:
                 priority = [color for color in priority if color != Color.GREEN]
                 options = remove_all("GREEN", options)
                 print(f"Alread have enough green ml: {inv.num_green_ml}")
-            if inv.num_blue_ml > ML_THRESHOLD:
+            if inv.num_blue_ml > ml_THRESHOLD:
                 priority = [color for color in priority if color != Color.BLUE]
                 options = remove_all("BLUE", options)
                 print(f"Alread have enough blue ml: {inv.num_blue_ml}")
@@ -169,7 +169,7 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions):
                     #TEST:print(f"Priority {i}, value {Color(curr_color).name}")
                     match curr_color:
                         case Color.RED:
-                            if red_cnt < PURCHASE_MAX:
+                            if red_cnt < purchase_MAX:
                                 barrel = look_for("RED", options)
                                 #TEST:print(f"Checked options for Red: {barrel}")
                                 red_cnt += 1
@@ -178,7 +178,7 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions):
                                 options = remove_all("RED", options)
                                 print(f"Getting Sufficient number of red barrels: {red_cnt}")
                         case Color.GREEN:
-                            if green_cnt < PURCHASE_MAX:
+                            if green_cnt < purchase_MAX:
                                 barrel = look_for("GREEN", options)
                                 #TEST:print(f"Checked options for Green: {barrel}")
                                 green_cnt += 1
@@ -187,7 +187,7 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions):
                                 options = remove_all("GREEN", options)
                                 print(f"Getting Sufficient number of green barrels: {green_cnt}")
                         case Color.BLUE:
-                            if blue_cnt < PURCHASE_MAX:
+                            if blue_cnt < purchase_MAX:
                                 barrel = look_for("BLUE", options)
                                 #TEST:print(f"Checked options for Blue: {barrel}")
                                 blue_cnt += 1
@@ -234,13 +234,13 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions):
                     #TEST:print(f"Remaining Gold: {gold}")
                     options = list_viable(gold, options) # check what options remain with current gold
             else:
-                print(f"Current inventory sufficient, all ml types above {ML_THRESHOLD}")
+                print(f"Current inventory sufficient, all ml types above {ml_THRESHOLD}")
             plan_list = [f"sku: {bar.sku}, quantity: {bar.quantity}" for bar in barrel_plan]
             for item in plan_list:
                 print(item)
             return ({ "sku": bar.sku, "quantity": bar.quantity, } for bar in barrel_plan)
         else:
-            if SHOP_PHASE >= PHASE_THREE:
+            if shop_phase >= PHASE_THREE:
                 print("No Large barrels offered from wholesale")
             else:
                 print("Could not afford any barrels or none available")
@@ -285,7 +285,8 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             potions = connection.execute(sqlalchemy.text(sql))
             sql = ("SELECT COALESCE(SUM(delta),0) FROM potion_quantities")
             num_potions = connection.execute(sqlalchemy.text(sql)).scalar_one()
-            return make_barrel_plan(wholesale_catalog, inv, potions, num_potions)
+            shop_phase = get_shop_state(connection).phase
+            return make_barrel_plan(wholesale_catalog, inv, potions, num_potions, shop_phase)
     except DBAPIError as error:
         print(f"Error returned: <<<{error}>>>")
 
