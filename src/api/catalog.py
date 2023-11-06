@@ -44,7 +44,7 @@ class RecentPotion(BaseModel):
 
 def add_recent_sellers(catalog: list[Potion], potions, shop_state, conn):
     sql = f"""
-        SELECT potions.name as potion, potion_id, sum(quantity_requested) as num_requested
+        SELECT potions.name as name, potion_id, sum(quantity_requested) as num_requested
         FROM cart_contents
         JOIN potions ON cart_contents.potion_id = potions.id
         WHERE cart_contents.created_at >= now() - interval '{shop_state.recents_interval} hours'
