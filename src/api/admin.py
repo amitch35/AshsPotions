@@ -22,6 +22,7 @@ def reset():
             sql += f"INSERT INTO global_inventory DEFAULT VALUES; "
             sql += f"TRUNCATE potion_quantities; "
             sql += f"TRUNCATE shopping_carts CASCADE; "
+            sql += f"INSERT INTO shop_state DEFAULT VALUES; "
             connection.execute(sqlalchemy.text(sql))
     return "OK"
 

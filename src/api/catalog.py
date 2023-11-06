@@ -20,6 +20,16 @@ RECENTS_THRESHOLD = 9 # If more than 9 potions sold last tick sell again
 
 CATALOG_MAX = 6
 
+class ShopState(BaseModel):
+    phase: int
+    recents_threshold: int
+
+def get_shop_state(connection):
+    sql = """SELECT phase, recents_threshold FROM shop_state """
+    result = connection.execute(sqlalchemy.text(sql))
+    state =  result.first() # Shop state is on a single row
+    return ShopState(phase=state.phase, recents_threshold=state.recents_threshold)
+
 # Use reflection to derive table schema. You can also code this in manually.
 metadata_obj = sqlalchemy.MetaData()
 potions = sqlalchemy.Table("potions", metadata_obj, autoload_with=db.engine)
@@ -34,15 +44,8 @@ class DayOfWeek(IntEnum):
     FRIDAY = 5
     SATURDAY = 6
 
-def add_recent_sellers(catalog: list[Potion], potions, conn):
-    sql = """
-        SELECT potions.name as potion, potion_id, sum(quantity_requested) as num_requested
-        FROM cart_contents
-        JOIN potions ON cart_contents.potion_id = potions.id
-        WHERE cart_contents.created_at >= now() - interval '2 hours'
-        GROUP BY potions.name, cart_contents.potion_id
-        ORDER BY num_requested
-    """
+def add_recent_sellers(catalog: list[Potion], potions, shop_state, conn):
+    sql = ("SELECT potions.name as potion, potion_id, sum(quantity_requested) as num_requested FROM cart_contents JOIN potions ON cart_contents.potion_id = potions.id WHERE cart_contents.created_at >= now() - interval '2 hours' GROUP BY potions.name, cart_contents.potion_id ORDER BY num_requested")
     recents = []
     result = conn.execute(sql)
     for potion in result:
@@ -59,7 +62,7 @@ def add_recent_sellers(catalog: list[Potion], potions, conn):
     num_added = 0
     for item in recents:
         for potion in potions:
-            if potion.name == item.name and item.num_requested > RECENTS_THRESHOLD:
+            if potion.name == item.name and item.num_requested > shop_state.recents_threshold:
                 catalog.append(potion)
                 num_added += 1
                 break  # Break out of the inner loop after finding a match
@@ -155,8 +158,9 @@ def get_catalog():
             # Figure out what is expected to be bottled
             inv = get_global_inventory(conn)
             bottle_plan = make_bottle_plan(inv, all_potions)
+            shop_state = get_shop_state(conn)
             # in Phase two or above
-            if SHOP_PHASE >= PHASE_TWO:
+            if shop_state.phase >= PHASE_TWO:
                 # Get the day of the week
                 day_of_week = int(conn.execute(select(extract("DOW", func.current_timestamp()))).scalar_one())
                 # Exclude certain potions based on the day
@@ -187,7 +191,7 @@ def get_catalog():
             catalog = []
             catalog_size = 0
             # Start by adding the best sellers (if they are available)
-            catalog_size += add_recent_sellers(catalog, all_available_potions, conn)
+            catalog_size += add_recent_sellers(catalog, all_available_potions, shop_state, conn)
             # make sure that no duplicates can be returned by susequent queries
             stmt = (
                 stmt.where(
