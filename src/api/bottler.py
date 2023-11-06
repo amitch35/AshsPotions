@@ -155,7 +155,7 @@ def make_bottle_plan(inv, potions, exclusions):
             else:
                 print(f"Not enough ml to bottle {potion.name}")
         else:
-            if potion.quantity < BOTTLE_THRESHOLD:
+            if potion.sku not in exclusions:
                 print(f"Already have {potion.quantity} of {potion.name}")
             else:
                 print(f"{potion.name} excluded today")

@@ -137,7 +137,7 @@ def get_catalog():
             # Figure out what is expected to be bottled
             inv = get_global_inventory(conn)
             exclusions = list_exclusions(conn)
-            bottle_plan = make_bottle_plan(inv, potions, exclusions)
+            bottle_plan = make_bottle_plan(inv, all_potions, exclusions)
             shop_state = get_shop_state(conn)
             # in Phase two or above
             if shop_state.phase >= PHASE_TWO:
