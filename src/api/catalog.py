@@ -80,8 +80,8 @@ def list_exclusions(conn):
     """
     exclusions = []
     result = conn.execute(sqlalchemy.text(sql))
-    for sku in result:
-        exclusions.append(sku)
+    for row in result:
+        exclusions.append(row.sku)
     return exclusions
 
 @router.get("/catalog/", tags=["catalog"])
