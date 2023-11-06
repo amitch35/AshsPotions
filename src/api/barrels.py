@@ -18,8 +18,10 @@ if SHOP_PHASE == PHASE_ONE or SHOP_PHASE == PHASE_TWO:
 elif SHOP_PHASE == PHASE_THREE: # Est. 33,000 ml mixed per day will check agin
     PURCHASE_MAX = 23
     ML_THRESHOLD = 30000
+LARGE_NUM_ML = 10000
 DARK_ML_THRESHOLD = 201000
-DARK_PURCHASE_MAX = 14
+DARK_ML_GOAL = 230000
+DARK_PURCHASE_MAX = 24
 NUM_COLORS = 4
 
 
@@ -160,6 +162,7 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions):
                 green_cnt = 0
                 blue_cnt = 0
                 dark_cnt = 0
+                dark_needed = DARK_ML_GOAL - inv.num_dark_ml
                 while (len(options) > 0):
                     #TEST:print(f"Remaining number of options: {len(options)}")
                     curr_color = priority[i]
@@ -193,7 +196,7 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions):
                                 options = remove_all("BLUE", options)
                                 print(f"Getting Sufficient number of blue barrels: {blue_cnt}")
                         case Color.DARK:
-                            if dark_cnt < DARK_PURCHASE_MAX:
+                            if dark_cnt < DARK_PURCHASE_MAX and (dark_cnt * LARGE_NUM_ML) < dark_needed:
                                 barrel = look_for("DARK", options)
                                 #TEST:print(f"Checked options for Dark: {barrel}")
                                 dark_cnt += 1
