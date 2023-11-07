@@ -49,6 +49,7 @@ def add_recent_sellers(catalog: list[Potion], potions, shop_state, conn):
         JOIN potions ON cart_contents.potion_id = potions.id
         WHERE cart_contents.created_at >= now() - interval '{shop_state.recents_interval} hours'
         GROUP BY potions.name, cart_contents.potion_id
+        HAVING sum(quantity_requested) > {shop_state.recents_threshold}
         ORDER BY num_requested desc
     """
     recents = []
@@ -65,7 +66,7 @@ def add_recent_sellers(catalog: list[Potion], potions, shop_state, conn):
     for item in recents:
         if num_added < CATALOG_MAX:
             for potion in potions:
-                if potion.name == item.name and item.num_requested >= shop_state.recents_threshold:
+                if potion.name == item.name:
                     catalog.append(potion)
                     print(f"Added {item.name}")
                     num_added += 1
