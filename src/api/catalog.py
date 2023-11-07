@@ -60,16 +60,12 @@ def add_recent_sellers(catalog: list[Potion], potions, shop_state, conn):
                 potion_id=item.potion_id,
                 num_requested=item.num_requested
             ))
-    for item in recents:
-        print(f"Name: {item.name}, Sold: {item.num_requested}")
     num_added = 0
     i = 0
     while num_added < CATALOG_MAX and i < len(recents):
         for potion in potions:
-            print(potion)
             if potion.name == recents[i].name:
                 catalog.append(potion)
-                print(f"Added {item.name}")
                 num_added += 1
                 break  # Break out of the inner loop after finding a match
         i += 1
