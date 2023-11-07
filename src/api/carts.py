@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from pydantic import BaseModel
 from src.api import auth
+from src.api.bottler import list_exclusions
+from src.api.audit import get_shop_state
 from enum import Enum
 import sqlalchemy
 from sqlalchemy import select, join
 from sqlalchemy.exc import DBAPIError
 from src import database as db
-import datetime
 
 SEARCH_PAGE_SIZE = 5
 
@@ -283,6 +284,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     print(f"----Cart {cart_id} Checkout----")
     try:
         with db.engine.begin() as connection:
+            exclusions = list_exclusions(connection)
             #print(f"Cart {cart_id}: {cart}")
             sql = (f"SELECT *, "
                     "(SELECT sum(delta) FROM potion_quantities "
@@ -302,7 +304,10 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                         status_code=status.HTTP_401_UNAUTHORIZED, detail="Forbidden: requested too many potions"
                     )
                 selling += record.quantity_requested
-                total += record.price * record.quantity_requested
+                if record.sku not in exclusions:
+                    total += record.price * record.quantity_requested
+                else:
+                    total += get_shop_state(connection).sell_off_price * record.quantity_requested
             if selling == 0:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST, detail="Bad Request: Cart did not exist or was empty"
