@@ -4,11 +4,33 @@ from src.api import auth
 import sqlalchemy
 from src import database as db
 
+PHASE_ONE = 1   # Getting started, growth and aquiring customers
+PHASE_TWO = 2   # Optimizing potion offerings
+PHASE_THREE = 3 # Optimizing Barrel Purchases
+PHASE_FOUR = 4  # Stop buying barrels
+
 router = APIRouter(
     prefix="/audit",
     tags=["audit"],
     dependencies=[Depends(auth.get_api_key)],
 )
+
+class ShopState(BaseModel):
+    phase: int
+    recents_threshold: int
+    recents_interval: int
+    sell_off_price: int
+    bottle_max: int
+
+def get_shop_state(connection):
+    sql = """SELECT phase, recents_threshold, recents_interval, sell_off_price, bottle_max FROM shop_state """
+    result = connection.execute(sqlalchemy.text(sql))
+    state =  result.first() # Shop state is on a single row
+    return ShopState(phase=state.phase, 
+                    recents_threshold=state.recents_threshold,
+                    recents_interval=state.recents_interval,
+                    sell_off_price=state.sell_off_price,
+                    bottle_max=state.bottle_max)
 
 def get_global_inventory(connection):
     sql = ("SELECT gold, potion_sum.num_potions, "

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from enum import IntEnum
 from pydantic import BaseModel
 from src.api import auth
-from src.api.audit import get_global_inventory
+from src.api.audit import get_global_inventory, PHASE_TWO, PHASE_THREE, PHASE_FOUR, get_shop_state
 import sqlalchemy
 from sqlalchemy.exc import DBAPIError
 from src import database as db
@@ -96,7 +96,7 @@ class Potion(BaseModel):
     dark: int
     quantity: int
     
-def make_bottle_plan(inv, potions, exclusions):
+def make_bottle_plan(inv, potions, exclusions, shop_state):
     bottle_plan = []
     inv_red = inv.num_red_ml
     inv_green = inv.num_green_ml
@@ -125,8 +125,8 @@ def make_bottle_plan(inv, potions, exclusions):
             # How many potions can be mixed
             num_potions = min(red_ok, green_ok, blue_ok, dark_ok)
             if num_potions > 0:
-                # bottle as much as possible up to threshold
-                num_potions = min(num_potions, max(0, BOTTLE_THRESHOLD - potion.quantity))
+                # bottle as much as possible up to max
+                num_potions = min(num_potions, shop_state.bottle_max)
                 # but not more than can fit in available slots
                 num_potions = min(slots_available, num_potions)
                 if num_potions > 0:
@@ -189,7 +189,8 @@ def get_bottle_plan():
                     "ORDER BY quantity, potions.id; ")
             potions = connection.execute(sqlalchemy.text(sql))
             exclusions = list_exclusions(connection)
-            bottle_plan = make_bottle_plan(inv, potions, exclusions)
+            shop_state = get_shop_state(connection)
+            bottle_plan = make_bottle_plan(inv, potions, exclusions, shop_state)
             bottle_plan_json = []
             for potion in bottle_plan:
                 bottle_plan_json.append({

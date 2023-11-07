@@ -6,33 +6,13 @@ from sqlalchemy import *
 from sqlalchemy.exc import DBAPIError
 from src import database as db
 from src.api.bottler import make_bottle_plan, list_exclusions, Potion
-from src.api.audit import get_global_inventory
+from src.api.audit import get_global_inventory, PHASE_TWO, get_shop_state
 
 router = APIRouter()
-
-PHASE_ONE = 1   # Getting started, growth and aquiring customers
-PHASE_TWO = 2   # Optimizing potion offerings
-PHASE_THREE = 3 # Optimizing Barrel Purchases
-PHASE_FOUR = 4  # Stop buying barrels
 
 RECENTS_THRESHOLD = 9 # If more than 9 potions sold last tick sell again
 
 CATALOG_MAX = 6
-
-class ShopState(BaseModel):
-    phase: int
-    recents_threshold: int
-    recents_interval: int
-    sell_off_price: int
-
-def get_shop_state(connection):
-    sql = """SELECT phase, recents_threshold, recents_interval, sell_off_price FROM shop_state """
-    result = connection.execute(sqlalchemy.text(sql))
-    state =  result.first() # Shop state is on a single row
-    return ShopState(phase=state.phase, 
-                    recents_threshold=state.recents_threshold,
-                    recents_interval=state.recents_interval,
-                    sell_off_price=state.sell_off_price)
 
 # Use reflection to derive table schema. You can also code this in manually.
 metadata_obj = sqlalchemy.MetaData()
@@ -137,8 +117,8 @@ def get_catalog():
             # Figure out what is expected to be bottled
             inv = get_global_inventory(conn)
             exclusions = list_exclusions(conn)
-            bottle_plan = make_bottle_plan(inv, all_potions, exclusions)
             shop_state = get_shop_state(conn)
+            bottle_plan = make_bottle_plan(inv, all_potions, exclusions, shop_state)
             # Get all potions in stock
             all_available_potions = []
             result = conn.execute(stmt.order_by("quantity", potions.c.id))

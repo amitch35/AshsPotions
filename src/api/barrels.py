@@ -5,7 +5,7 @@ import sqlalchemy
 from sqlalchemy.exc import DBAPIError
 from src import database as db
 from src.api.bottler import Color, MAX_BOTTLE_SLOTS
-from src.api.catalog import PHASE_TWO, PHASE_THREE, PHASE_FOUR, get_shop_state
+from src.api.audit import PHASE_TWO, PHASE_THREE, PHASE_FOUR, get_shop_state
 import copy
 
 LARGE_NUM_ML = 10000
