@@ -63,17 +63,16 @@ def add_recent_sellers(catalog: list[Potion], potions, shop_state, conn):
     for item in recents:
         print(f"Name: {item.name}, Sold: {item.num_requested}")
     num_added = 0
-    for item in recents:
-        if num_added < CATALOG_MAX:
-            for potion in potions:
-                if potion.name == item.name:
-                    catalog.append(potion)
-                    print(f"Added {item.name}")
-                    num_added += 1
-                    break  # Break out of the inner loop after finding a match
-        else:
-            break
-    return num_added
+    i = 0
+    while num_added < CATALOG_MAX and num_added < len(recents):
+        for potion in potions:
+            if potion.name == recents[i].name:
+                catalog.append(potion)
+                print(f"Added {item.name}")
+                num_added += 1
+                break  # Break out of the inner loop after finding a match
+        i += 1
+    return num_added, catalog
 
 @router.get("/catalog/", tags=["catalog"])
 def get_catalog():
@@ -170,7 +169,7 @@ def get_catalog():
             catalog = []
             catalog_size = 0
             # Start by adding the best sellers (if they are available)
-            catalog_size += add_recent_sellers(catalog, all_available_potions, shop_state, conn)
+            catalog_size, catalog = add_recent_sellers(catalog, all_available_potions, shop_state, conn)
             # make sure that no duplicates can be returned by susequent queries
             stmt = (
                 stmt.where(
