@@ -130,7 +130,7 @@ def make_bottle_plan(inv, potions, exclusions):
                 # but not more than can fit in available slots
                 num_potions = min(slots_available, num_potions)
                 if num_potions > 0:
-                    print(f"Plan to bottle {num_potions} {potion.name} potions")
+                #    print(f"Plan to bottle {num_potions} {potion.name} potions")
                     inv_red -= (potion.red * num_potions)
                     inv_green -= (potion.green * num_potions)
                     inv_blue -= (potion.blue * num_potions)
@@ -147,11 +147,11 @@ def make_bottle_plan(inv, potions, exclusions):
                     ))
                     # update available slots
                     slots_available -= num_potions
-                else: # If inventory alread has more than threshold
-                    if slots_available == 0:
-                        print(f"Did not bottle {potion.name} to avoid exceeding {MAX_BOTTLE_SLOTS} potions")
-                    else:
-                        print(f"No need to bottle {potion.name} with {potion.quantity} in stock")
+                # else: # If inventory alread has more than threshold
+                #     if slots_available == 0:
+                #         print(f"Did not bottle {potion.name} to avoid exceeding {MAX_BOTTLE_SLOTS} potions")
+                #     else:
+                #         print(f"No need to bottle {potion.name} with {potion.quantity} in stock")
             else:
                 print(f"Not enough ml to bottle {potion.name}")
         else:
