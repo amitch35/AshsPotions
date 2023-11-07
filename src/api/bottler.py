@@ -14,7 +14,7 @@ class Color(IntEnum):
     DARK = 3
     BLANK = 4
 
-NUM_POTION_MIXES = 6
+NUM_POTION_MIXES = 7
 MAX_BOTTLE_SLOTS = 300
 BOTTLE_THRESHOLD = MAX_BOTTLE_SLOTS // NUM_POTION_MIXES
 MAX_BOTTLE_NUM = 99999
@@ -105,7 +105,7 @@ def make_bottle_plan(inv, potions, exclusions):
     # make it so never goes above max of 300 
     slots_available = MAX_BOTTLE_SLOTS - inv.num_potions
     for potion in potions:
-        if potion.quantity < BOTTLE_THRESHOLD and potion.sku not in exclusions:
+        if potion.sku not in exclusions:
             if potion.red > 0:
                 red_ok = (inv_red // potion.red)
             else:
