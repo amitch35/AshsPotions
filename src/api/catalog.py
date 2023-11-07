@@ -157,9 +157,6 @@ def get_catalog():
                 )
                 result = conn.execute(stmt)
                 for potion in result:
-                    qty = potion.quantity
-                    if qty > 1 and potion.sku not in exclusions: # don't offer all potions unless excluded
-                        qty -= 1
                     catalog.append(Potion(
                         sku=potion.sku, 
                         price=potion.price,
@@ -168,7 +165,7 @@ def get_catalog():
                         green=potion.green,
                         blue=potion.blue,
                         dark=potion.dark,
-                        quantity=qty
+                        quantity=potion.quantity
                     ))
             # in Phase two or above
             if shop_state.phase >= PHASE_TWO:
@@ -184,6 +181,10 @@ def get_catalog():
                     if potion.name == item.name:
                         item.quantity += potion.quantity
                         break  # Break out of the inner loop after finding a match
+            # don't offer all potions unless excluded or only have 1
+            for potion in catalog:
+                if potion.quantity > 1 and potion.sku not in exclusions:
+                    potion.quantity -= 1
 
             print("Ash's Catalog:")
             catalog_json = []
