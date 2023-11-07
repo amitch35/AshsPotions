@@ -23,14 +23,16 @@ class ShopState(BaseModel):
     phase: int
     recents_threshold: int
     recents_interval: int
+    sell_off_price: int
 
 def get_shop_state(connection):
-    sql = """SELECT phase, recents_threshold, recents_interval FROM shop_state """
+    sql = """SELECT phase, recents_threshold, recents_interval, sell_off_price FROM shop_state """
     result = connection.execute(sqlalchemy.text(sql))
     state =  result.first() # Shop state is on a single row
     return ShopState(phase=state.phase, 
                     recents_threshold=state.recents_threshold,
-                    recents_interval=state.recents_interval)
+                    recents_interval=state.recents_interval,
+                    sell_off_price=state.sell_off_price)
 
 # Use reflection to derive table schema. You can also code this in manually.
 metadata_obj = sqlalchemy.MetaData()
@@ -137,17 +139,6 @@ def get_catalog():
             exclusions = list_exclusions(conn)
             bottle_plan = make_bottle_plan(inv, all_potions, exclusions)
             shop_state = get_shop_state(conn)
-            # in Phase two or above
-            if shop_state.phase >= PHASE_TWO:
-                # Exclude certain potions based on the day
-                if len(exclusions) > 0:
-                    stmt = (
-                        stmt.where(
-                            and_(
-                                not_(potions.c.sku.in_(exclusions))
-                            )
-                        )
-                    )
             # Get all potions in stock
             all_available_potions = []
             result = conn.execute(stmt.order_by("quantity", potions.c.id))
@@ -196,6 +187,14 @@ def get_catalog():
                         dark=potion.dark,
                         quantity=potion.quantity
                     ))
+            # in Phase two or above
+            if shop_state.phase >= PHASE_TWO:
+                # Lower the price of excluded potions to sell them
+                # (Only matters if they actually end up in catalog)
+                for potion in catalog:
+                    for sku in exclusions:
+                        if potion.sku == sku:
+                            potion.price = shop_state.sell_off_price
             # Increase quantity in catalog if expected to bottle more
             for potion in bottle_plan:
                 for item in catalog:
