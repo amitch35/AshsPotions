@@ -143,7 +143,7 @@ def get_catalog():
                 for potion in all_available_potions:
                     if potion.sku in exclusions:
                         potion.price = shop_state.sell_off_price
-                        if len(catalog) < CATALOG_MAX:
+                        if len(catalog) < CATALOG_MAX and potion not in catalog:
                             catalog.append(potion)
             # make sure that no duplicates can be returned by susequent queries
             stmt = (
