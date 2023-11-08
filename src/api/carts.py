@@ -187,13 +187,12 @@ class NewCart(BaseModel):
 @router.post("/")
 def create_cart(new_cart: NewCart):
     """ """
-    print("----New Cart----")
     try:
         with db.engine.begin() as connection:
             #print(f"Creating cart for: {new_cart.customer}")
             sql = f"INSERT INTO shopping_carts (customer) VALUES ('{new_cart.customer}') RETURNING shopping_carts.id;"
             new_id = connection.execute(sqlalchemy.text(sql)).scalar_one()
-            print(f"Creating cart {new_id} for: {new_cart.customer}")
+            print(f"----New Cart---- Creating cart {new_id} for: {new_cart.customer}")
         return {"cart_id": new_id}
     except DBAPIError as error:
         print(f"Error returned: <<<{error}>>>")
@@ -227,7 +226,6 @@ class CartItem(BaseModel):
 @router.post("/{cart_id}/items/{item_sku}")
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """ """
-    print("----Add to Cart----")
     try:
         with db.engine.begin() as connection:
             sql = f"SELECT * FROM shopping_carts WHERE id = {cart_id}"
@@ -255,7 +253,7 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
                         sql = (f"UPDATE cart_contents SET quantity_requested = {cart_item.quantity} "
                                 f"WHERE id = {record.id}; ")
                     else: # adding new item to cart
-                        print(f"{cart_item.quantity} new {item_sku} added to cart {cart_id}")
+                        print(f"----Add to Cart---- {cart_item.quantity} new {item_sku} added to cart {cart_id}")
                         sql = (f"INSERT INTO cart_contents "
                                     "(cart_id, quantity_requested, potion_id) "
                                 "VALUES ( "
