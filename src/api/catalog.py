@@ -51,7 +51,7 @@ def add_recent_sellers(catalog: list[Potion], potions, shop_state, conn):
                 num_added += 1
                 break  # Break out of the inner loop after finding a match
         i += 1
-    return num_added, catalog
+    return catalog
 
 @router.get("/catalog/", tags=["catalog"])
 def get_catalog():
@@ -135,9 +135,16 @@ def get_catalog():
                     ))
             # Start forming the Catalog
             catalog = []
-            catalog_size = 0
             # Start by adding the best sellers (if they are available)
-            catalog_size, catalog = add_recent_sellers(catalog, all_available_potions, shop_state, conn)
+            catalog = add_recent_sellers(catalog, all_available_potions, shop_state, conn)
+            # in Phase two or above
+            if shop_state.phase >= PHASE_TWO:
+                # Lower the price of excluded potions and sell them
+                for potion in all_available_potions:
+                    if potion.sku in exclusions:
+                        potion.price = shop_state.sell_off_price
+                        if len(catalog) < CATALOG_MAX:
+                            catalog.append(potion)
             # make sure that no duplicates can be returned by susequent queries
             stmt = (
                 stmt.where(
@@ -147,7 +154,7 @@ def get_catalog():
                 )
             )
             # remaining catalog is generated randomly
-            num_needed = CATALOG_MAX - catalog_size
+            num_needed = CATALOG_MAX - len(catalog)
             if num_needed > 0:
                 stmt = (
                     stmt.order_by(
@@ -167,14 +174,6 @@ def get_catalog():
                         dark=potion.dark,
                         quantity=potion.quantity
                     ))
-            # in Phase two or above
-            if shop_state.phase >= PHASE_TWO:
-                # Lower the price of excluded potions to sell them
-                # (Only matters if they actually end up in catalog)
-                for potion in catalog:
-                    for sku in exclusions:
-                        if potion.sku == sku:
-                            potion.price = shop_state.sell_off_price
             # Increase quantity in catalog if expected to bottle more
             for potion in bottle_plan:
                 for item in catalog:
