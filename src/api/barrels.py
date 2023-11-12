@@ -10,8 +10,8 @@ import copy
 
 LARGE_NUM_ML = 10000
 DARK_ML_THRESHOLD = 201000
-DARK_ML_GOAL = 230000
-DARK_PURCHASE_MAX = 24
+DARK_ML_GOAL = 65000
+DARK_PURCHASE_MAX = 0
 NUM_COLORS = 4
 
 
@@ -117,13 +117,13 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions, shop_phase):
     if shop_phase >= PHASE_FOUR:
         purchase_THRESHOLD = 0
     else:
-        purchase_THRESHOLD = MAX_BOTTLE_SLOTS
+        purchase_THRESHOLD = MAX_BOTTLE_SLOTS + 1
     if shop_phase <= PHASE_TWO:
         purchase_MAX = 10 # 4
         ml_THRESHOLD = 8000
-    elif shop_phase == PHASE_THREE: # Est. 33,000 ml mixed per day will check agin
-        purchase_MAX = 23
-        ml_THRESHOLD = 30000
+    elif shop_phase == PHASE_THREE: # Est. 28,000 ml mixed per day will check agin
+        purchase_MAX = 5
+        ml_THRESHOLD = 126940
     if num_potions < purchase_THRESHOLD:
         barrel_plan = []
         gold = inv.gold
