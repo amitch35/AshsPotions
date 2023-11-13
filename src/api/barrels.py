@@ -122,8 +122,8 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions, shop_phase):
         purchase_MAX = 10 # 4
         ml_THRESHOLD = 8000
     elif shop_phase == PHASE_THREE: # Est. 28,000 ml mixed per day will check agin
-        purchase_MAX = 5
-        ml_THRESHOLD = 126940
+        purchase_MAX = 3
+        ml_THRESHOLD = 127270
     if num_potions < purchase_THRESHOLD:
         barrel_plan = []
         gold = inv.gold
