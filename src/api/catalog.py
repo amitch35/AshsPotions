@@ -138,13 +138,13 @@ def get_catalog():
             # Start by adding the best sellers (if they are available)
             catalog = add_recent_sellers(catalog, all_available_potions, shop_state, conn)
             # in Phase two or above
-            # if shop_state.phase >= PHASE_TWO:
-            #     # Lower the price of excluded potions and sell them
-            #     for potion in all_available_potions:
-            #         if potion.sku in exclusions:
-            #             potion.price = shop_state.sell_off_price
-            #             if len(catalog) < CATALOG_MAX and potion not in catalog:
-            #                 catalog.append(potion)
+            if shop_state.phase >= PHASE_TWO:
+                # Lower the price of excluded potions and sell them
+                for potion in all_available_potions:
+                    if potion.sku in exclusions:
+                        potion.price = shop_state.sell_off_price
+                        if len(catalog) < CATALOG_MAX and potion not in catalog:
+                            catalog.append(potion)
             # make sure that no duplicates can be returned by susequent queries
             stmt = (
                 stmt.where(
@@ -180,10 +180,11 @@ def get_catalog():
                     if potion.name == item.name:
                         item.quantity += potion.quantity
                         break  # Break out of the inner loop after finding a match
-            # # don't offer all potions unless excluded or only have 1
-            # for potion in catalog:
-            #     if potion.quantity > 1 and potion.sku not in exclusions:
-            #         potion.quantity -= 1
+            if shop_state.phase >= PHASE_TWO:
+                # don't offer all potions unless excluded or only have 1
+                for potion in catalog:
+                    if potion.quantity > 1 and potion.sku not in exclusions:
+                        potion.quantity -= 1
 
             print("Ash's Catalog:")
             catalog_json = []
