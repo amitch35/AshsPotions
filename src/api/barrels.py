@@ -9,9 +9,9 @@ from src.api.audit import PHASE_TWO, PHASE_THREE, PHASE_FOUR, get_shop_state
 import copy
 
 LARGE_NUM_ML = 10000
-DARK_ML_THRESHOLD = 201000
-DARK_ML_GOAL = 65000
-DARK_PURCHASE_MAX = 0
+DARK_ML_THRESHOLD = 60000
+DARK_ML_GOAL = 120000
+DARK_PURCHASE_MAX = 12
 NUM_COLORS = 4
 
 
@@ -119,11 +119,15 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions, shop_phase):
     else:
         purchase_THRESHOLD = MAX_BOTTLE_SLOTS + 1
     if shop_phase <= PHASE_TWO:
-        purchase_MAX = 10 # 4
+        red_purchase_MAX = 10
+        green_purchase_MAX = red_purchase_MAX
+        blue_purchase_MAX = red_purchase_MAX
         ml_THRESHOLD = 8000
     elif shop_phase == PHASE_THREE: # Est. 28,000 ml mixed per day will check agin
-        purchase_MAX = 3
-        ml_THRESHOLD = 127270
+        red_purchase_MAX = 24
+        green_purchase_MAX = 18
+        blue_purchase_MAX = 14
+        ml_THRESHOLD = 35000
     if num_potions < purchase_THRESHOLD:
         barrel_plan = []
         gold = inv.gold
@@ -169,7 +173,7 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions, shop_phase):
                     #TEST:print(f"Priority {i}, value {Color(curr_color).name}")
                     match curr_color:
                         case Color.RED:
-                            if red_cnt < purchase_MAX:
+                            if red_cnt < red_purchase_MAX:
                                 barrel = look_for("RED", options)
                                 #TEST:print(f"Checked options for Red: {barrel}")
                                 red_cnt += 1
@@ -178,7 +182,7 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions, shop_phase):
                                 options = remove_all("RED", options)
                                 print(f"Getting Sufficient number of red barrels: {red_cnt}")
                         case Color.GREEN:
-                            if green_cnt < purchase_MAX:
+                            if green_cnt < green_purchase_MAX:
                                 barrel = look_for("GREEN", options)
                                 #TEST:print(f"Checked options for Green: {barrel}")
                                 green_cnt += 1
@@ -187,7 +191,7 @@ def make_barrel_plan(wholesale_catalog, inv, potions, num_potions, shop_phase):
                                 options = remove_all("GREEN", options)
                                 print(f"Getting Sufficient number of green barrels: {green_cnt}")
                         case Color.BLUE:
-                            if blue_cnt < purchase_MAX:
+                            if blue_cnt < blue_purchase_MAX:
                                 barrel = look_for("BLUE", options)
                                 #TEST:print(f"Checked options for Blue: {barrel}")
                                 blue_cnt += 1
